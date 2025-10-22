@@ -1,6 +1,5 @@
 from smolagents import CodeAgent, tool, ToolCallingAgent
 from ollama_backend import OllamaChat
-import devops_tools as tools
 import os
 import subprocess
 
@@ -93,8 +92,19 @@ agent = DevOpsAgent(
 
 model.tools = agent.tools
 
-# Example usage
-query = "Read AWS credentials from the environment and create a Dockerfile that prints $DOCKER_USER"
-result = agent.run(query)
-print("\n=== FINAL RESULT ===")
-print(result)
+# CLI argument support
+if __name__ == "__main__":
+    import sys
+
+    # Check if query provided as argument
+    if len(sys.argv) > 1:
+        query = " ".join(sys.argv[1:])
+    else:
+        # Default query if none provided
+        query = "Read AWS credentials from the environment and create a Dockerfile that prints $DOCKER_USER"
+        print(f"ℹ️  No query provided. Using default query.")
+        print(f"   Usage: python agent.py \"<your query here>\"\n")
+
+    result = agent.run(query)
+    print("\n=== FINAL RESULT ===")
+    print(result)
