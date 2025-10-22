@@ -66,13 +66,15 @@ def get_env(key: str) -> str:
         key (str): Name of the environment variable.
 
     Returns:
-        str: The variable value or 'undefined' if not set.
+        str: The variable value or an error message if not set.
     """
-
-    return os.getenv(key, "undefined")
+    value = os.getenv(key)
+    if value is None:
+        return f"ERROR: Environment variable '{key}' is not set"
+    return value
 
 # Model backend
-model = OllamaChat(model="hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K")
+model = OllamaChat(model="qwen3:1.7b")
 
 
 
@@ -85,7 +87,8 @@ class DevOpsAgent(ToolCallingAgent):
 agent = DevOpsAgent(
     tools=[read_file, write_file, run_command, get_env],
     model=model,
-    instructions="You are a DevOps automation assistant; use the tools provided and call no other code."
+    instructions="You are a DevOps automation assistant; use the tools provided and call no other code.",
+    max_steps=4  # Prevent infinite loops - stop after 10 steps
 )
 
 

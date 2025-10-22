@@ -9,26 +9,48 @@ STRICT_INSTRUCTIONS = """
 You are a DevOps automation agent that executes tasks step-by-step using tools.
 
 CRITICAL RULES:
-1. Respond with tool calls in this format: Tool:<tool_name>({"arg1": "value1"})
+1. Use ONLY <tool_call> XML tags for tool calls (see examples below)
 2. You may call multiple tools together, EXCEPT final_answer
 3. NEVER combine final_answer with any other tool call
-4. When the task is complete, your ENTIRE response must be ONLY:
-   Tool:final_answer({"answer": "<your final answer>"})
-5. Never include natural language, explanations, or markdown
+4. When task is complete, call final_answer tool alone
+5. Never include natural language outside tool calls
 6. If you encounter an error, try a different approach
 7. Do NOT repeat the same failing tool call twice with identical arguments
+8. Use plain JSON strings - NO Python f-strings or variable syntax
+
+TOOL CALL FORMAT:
+<tool_call>
+{"name": "tool_name", "arguments": {"arg1": "value1", "arg2": "value2"}}
+</tool_call>
 
 EXAMPLES:
-Good (multiple tools):
-Tool:get_env({"key": "DOCKER_USER"})
-Tool:write_file({"path": "Dockerfile", "content": "FROM alpine"})
 
-Good (final answer alone):
-Tool:final_answer({"answer": "Task completed"})
+Example 1 - Reading env var and using the value:
+<tool_call>
+{"name": "get_env", "arguments": {"key": "DOCKER_USER"}}
+</tool_call>
+(Response: "testuser")
+<tool_call>
+{"name": "write_file", "arguments": {"path": "config.txt", "content": "User: testuser"}}
+</tool_call>
 
-BAD (never do this):
-Tool:run_command({"command": "ls"})
-Tool:final_answer({"answer": "Done"})
+Example 2 - Multiple tool calls:
+<tool_call>
+{"name": "get_env", "arguments": {"key": "DOCKER_USER"}}
+</tool_call>
+<tool_call>
+{"name": "write_file", "arguments": {"path": "Dockerfile", "content": "FROM alpine\\nCMD echo hello"}}
+</tool_call>
+
+Example 3 - Completing the task:
+<tool_call>
+{"name": "final_answer", "arguments": {"answer": "Dockerfile created successfully"}}
+</tool_call>
+
+IMPORTANT:
+- Use the actual values from tool responses, not variable names
+- Each tool call must be in separate <tool_call> tags
+- Arguments must be valid JSON (no f-strings, no variables)
 """
 
 
@@ -38,7 +60,7 @@ class OllamaChat:
     Simplifies system prompt, flattens messages, and supports simple tool call parsing.
     """
 
-    def __init__(self, model="hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K",
+    def __init__(self, model="qwen3:1.7b", #"hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K"
                  endpoint="http://localhost:11434/api/chat"):
         self.model = model
         self.endpoint = endpoint
@@ -110,16 +132,21 @@ class OllamaChat:
                 args_section = "  (no arguments)"
             lines.append(f"- {name}:\n{args_section}\n  Description: {desc}")
 
-        # 3️⃣ Tool usage examples
+        # 3️⃣ Tool usage examples (using XML format)
         examples = [
             "",
             "Example tool calls:",
-            'Tool:get_env({"key": "DOCKER_USER"})',
-            'Tool:write_file({"path": "Dockerfile", "content": "FROM alpine\\nCMD echo $DOCKER_USER"})',
-            'Tool:run_command({"command": "echo $DOCKER_USER"})',
+            '<tool_call>',
+            '{"name": "get_env", "arguments": {"key": "DOCKER_USER"}}',
+            '</tool_call>',
+            '<tool_call>',
+            '{"name": "write_file", "arguments": {"path": "Dockerfile", "content": "FROM alpine\\nCMD echo hello"}}',
+            '</tool_call>',
             "",
             "When you are done, finalize with:",
-            'Tool:final_answer({"answer": "..."})',
+            '<tool_call>',
+            '{"name": "final_answer", "arguments": {"answer": "Task completed"}}',
+            '</tool_call>',
         ]
 
         return "\n".join([system_section] + lines + examples)
@@ -190,8 +217,10 @@ class OllamaChat:
 
     def parse_tool_calls(self, message):
         """
-        Parse model output like:
-        Tool:get_env({"key": "DOCKER_USER"})
+        Parse model output in QWEN's native XML format:
+        <tool_call>
+        {"name": "tool_name", "arguments": {"arg": "value"}}
+        </tool_call>
         Return SmolAgents-compatible ChatToolCall list.
         """
         # --- Universal import across SmolAgents versions ---
@@ -217,23 +246,45 @@ class OllamaChat:
         text = getattr(message, "content", str(message))
         calls = []
 
-        for match in re.finditer(r"Tool:([a-zA-Z0-9_]+)\((\{.*?\})\)", text):
-            name = match.group(1)
+        # Try parsing XML <tool_call> tags first (QWEN's official format)
+        for match in re.finditer(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", text, re.DOTALL):
             try:
-                args = json.loads(match.group(2))
-            except json.JSONDecodeError:
-                args = {"raw": match.group(2)}
+                tool_data = json.loads(match.group(1))
+                name = tool_data.get("name", "unknown")
+                args = tool_data.get("arguments", {})
 
-            func = FunctionCall(name=name, arguments=args)
+                func = FunctionCall(name=name, arguments=args)
 
-            # ✅ Ensure every call has a unique id
-            try:
-                call = ChatToolCall(id=str(uuid.uuid4()), function=func)
-            except TypeError:
-                # fallback for older versions that don't take id
-                call = ChatToolCall(function=func)
+                try:
+                    call = ChatToolCall(id=str(uuid.uuid4()), function=func)
+                except TypeError:
+                    call = ChatToolCall(function=func)
 
-            calls.append(call)
+                calls.append(call)
+            except json.JSONDecodeError as e:
+                print(f"⚠️  WARNING: Failed to parse tool call JSON: {e}")
+                continue
+
+        # If no XML tags found, try markdown JSON blocks (QWEN small models often use this)
+        if not calls:
+            for match in re.finditer(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL):
+                try:
+                    tool_data = json.loads(match.group(1))
+                    # Check if it looks like a tool call (has "name" and "arguments")
+                    if "name" in tool_data and "arguments" in tool_data:
+                        name = tool_data.get("name")
+                        args = tool_data.get("arguments", {})
+
+                        func = FunctionCall(name=name, arguments=args)
+
+                        try:
+                            call = ChatToolCall(id=str(uuid.uuid4()), function=func)
+                        except TypeError:
+                            call = ChatToolCall(function=func)
+
+                        calls.append(call)
+                except json.JSONDecodeError:
+                    continue
 
         # 🛡️ SAFETY: If final_answer is present with other tools, remove it
         # This prevents the agent from getting stuck in an infinite loop
