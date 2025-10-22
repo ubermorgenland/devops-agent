@@ -322,8 +322,3 @@ MIT License - Use at your own risk
 
 This is a local DevOps automation tool. Feel free to fork and customize for your needs.
 
-## Credits
-
-- Built with [SmolAgents](https://github.com/huggingface/smolagents)
-- Powered by [Ollama](https://ollama.com/)
-- Uses [Qwen2.5-Coder](https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF) model
