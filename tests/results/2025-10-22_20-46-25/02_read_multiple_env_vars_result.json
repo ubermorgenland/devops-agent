@@ -1,0 +1,40 @@
+{
+  "id": "02",
+  "name": "read_multiple_env_vars",
+  "category": "env_vars",
+  "status": "FAIL",
+  "duration": 6.127357482910156e-05,
+  "steps": 0,
+  "assertions_passed": 0,
+  "assertions_failed": 3,
+  "failures": [
+    {
+      "assertion": "tool_call_count",
+      "reason": "Tool 'get_env' called 0 times, expected 2",
+      "expected": 2,
+      "actual": 0
+    },
+    {
+      "assertion": "completed_successfully",
+      "reason": "Test completed with errors",
+      "expected": null,
+      "actual": [
+        "name 'run_command' is not defined"
+      ]
+    },
+    {
+      "assertion": "final_answer_contains",
+      "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+      "expected": [
+        "testuser",
+        "us-east-1"
+      ],
+      "actual": ""
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [],
+  "errors": [
+    "name 'run_command' is not defined"
+  ]
+}

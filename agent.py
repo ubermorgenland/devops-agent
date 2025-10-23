@@ -1,4 +1,5 @@
 from smolagents import CodeAgent, tool, ToolCallingAgent
+from smolagents.models import ChatMessage, MessageRole
 from ollama_backend import OllamaChat
 import os
 import subprocess
@@ -7,9 +8,82 @@ import subprocess
 # 1️⃣ Monkey-patch SmolAgents' default system message
 # ─────────────────────────────────────────────
 def _minimal_system_message(self):
-    return ""  # Disable SmolAgents’ long default prompt entirely
+    return ""  # Disable SmolAgents' long default prompt entirely
 
 ToolCallingAgent._make_system_message = _minimal_system_message
+
+# ─────────────────────────────────────────────
+# 2️⃣ Monkey-patch ActionStep.to_messages() for QWEN-friendly tool response formatting
+# ─────────────────────────────────────────────
+from smolagents.memory import ActionStep
+
+# Store original method
+_original_to_messages = ActionStep.to_messages
+
+def _qwen_friendly_to_messages(self, summary_mode=False):
+    """
+    Override tool response formatting to be more explicit for small models.
+    Instead of generic 'Observation: value', format as:
+    'Tool <tool_name> returned: <value>. Use this value in your next steps.'
+    """
+    messages = []
+
+    # Add model output message (assistant's tool call response)
+    if self.model_output_message:
+        messages.append(self.model_output_message)
+    elif self.model_output:
+        # Handle cases where model_output is a string
+        content = self.model_output if isinstance(self.model_output, str) else str(self.model_output)
+        messages.append(
+            ChatMessage(
+                role=MessageRole.ASSISTANT,
+                content=content.strip(),
+            )
+        )
+
+    # Add tool response with explicit formatting for QWEN
+    if self.observations is not None:
+        # Parse which tool was called to make response more explicit
+        tool_name = "unknown_tool"
+        if self.tool_calls and len(self.tool_calls) > 0:
+            # ToolCall has 'name' directly, not 'function.name'
+            tool_name = self.tool_calls[0].name
+
+        # Format observation to be explicit about value usage
+        observation_text = self.observations.strip()
+
+        # Simpler, clearer format for small models
+        formatted_observation = f"The value is: {observation_text}"
+
+        messages.append(
+            ChatMessage(
+                role=MessageRole.TOOL_RESPONSE,
+                content=[
+                    {
+                        "type": "text",
+                        "text": formatted_observation,
+                    }
+                ],
+            )
+        )
+
+    # Add error message if present
+    if self.error is not None:
+        error_message = (
+            "Error:\n"
+            + str(self.error)
+            + "\nNow let's retry: take care not to repeat previous errors!"
+        )
+        message_content = f"Call id: {self.tool_calls[0].id}\n" if self.tool_calls else ""
+        message_content += error_message
+        messages.append(
+            ChatMessage(role=MessageRole.TOOL_RESPONSE, content=[{"type": "text", "text": message_content}])
+        )
+
+    return messages
+
+# Apply the patch
+ActionStep.to_messages = _qwen_friendly_to_messages
 
 # Define tools using decorator
 @tool
@@ -43,15 +117,15 @@ def write_file(path: str, content: str) -> str:
     return f"Wrote {len(content)} bytes to {path}"
 
 @tool
-def run_command(command: str) -> str:
+def bash(command: str) -> str:
     """
-    Execute a shell command and return its output.
+    Execute a bash command and return its output. Use this for shell operations like 'ls', 'echo', 'grep', etc.
 
     Args:
-        command (str): The shell command to execute.
+        command (str): The bash command to execute (e.g., "ls *.txt", "echo Hello World").
 
     Returns:
-        str: The output or error text from the command.
+        str: The command output. Always include this output in your final answer when the user asks about command results.
     """
 
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -85,7 +159,7 @@ class DevOpsAgent(ToolCallingAgent):
 
 
 agent = DevOpsAgent(
-    tools=[read_file, write_file, run_command, get_env],
+    tools=[read_file, write_file, bash, get_env],
     model=model,
     instructions="You are a DevOps automation assistant; use the tools provided and call no other code.",
     max_steps=4  # Prevent infinite loops - stop after 10 steps

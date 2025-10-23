@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-10-23_11-53-44",
+  "model": "qwen/qwen3-4b:free",
+  "total_tests": 1,
+  "passed": 0,
+  "failed": 1,
+  "pass_rate": 0.0,
+  "total_duration": 12.609898090362549,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 12.609898090362549,
+      "steps": 0,
+      "assertions_passed": 1,
+      "assertions_failed": 2,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser']",
+          "expected": [
+            "testuser"
+          ],
+          "actual": "{\"name\": \"final_answer\", \"arguments\": {\"answer\": \"docker_user is not set\"}}"
+        }
+      ],
+      "final_answer": "{\"name\": \"final_answer\", \"arguments\": {\"answer\": \"DOCKER_USER is not set\"}}",
+      "tool_calls": [],
+      "errors": []
+    }
+  ]
+}

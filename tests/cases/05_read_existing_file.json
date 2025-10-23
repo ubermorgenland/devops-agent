@@ -1,0 +1,32 @@
+{
+  "id": "05",
+  "name": "read_existing_file",
+  "description": "Read contents of an existing file",
+  "category": "file_ops",
+
+  "setup": {
+    "env_vars": {},
+    "files": {
+      "input.txt": "sample data content"
+    }
+  },
+
+  "instruction": "Read the contents of input.txt and tell me what it contains",
+  "max_steps": 3,
+
+  "assertions": [
+    {
+      "type": "tool_called",
+      "tool": "read_file",
+      "args": {"path": "input.txt"}
+    },
+    {
+      "type": "final_answer_contains",
+      "values": ["sample data"],
+      "case_sensitive": false
+    },
+    {
+      "type": "completed_successfully"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+======================================================================
+VARIABILITY TEST REPORT
+======================================================================
+Total runs: 7
+Total duration: 2405.2s (40.1 minutes)
+Average pass rate: 80.0%
+Pass rate range: 70.0% - 90.0%
+Average run duration: 343.6s
+
+======================================================================
+TEST CONSISTENCY ANALYSIS
+======================================================================
+
+✅ ALWAYS PASSING (6 tests):
+   01: read_env_var [7/7]
+   02: read_multiple_env_vars [7/7]
+   03: create_simple_file [7/7]
+   05: read_existing_file [7/7]
+   07: list_files [7/7]
+   10: handle_missing_env [7/7]
+
+✓  MOSTLY PASSING (1 tests):
+   04: create_file_from_env [6/7] ✓✓✓✗✓✓✓
+
+⚠  INCONSISTENT (2 tests):
+   06: run_simple_command [4/7] ✓✓✓✓✗✗✗
+   08: multi_step_task [4/7] ✓✗✓✗✓✓✗
+
+❌ ALWAYS FAILING (1 tests):
+   09: create_dockerfile [0/7]
+
+======================================================================
+TEST RESULT MATRIX
+======================================================================
+Test ID  Test Name                      Results             
+----------------------------------------------------------------------
+01       read_env_var                   ✓✓✓✓✓✓✓         100%
+02       read_multiple_env_vars         ✓✓✓✓✓✓✓         100%
+03       create_simple_file             ✓✓✓✓✓✓✓         100%
+04       create_file_from_env           ✓✓✓✗✓✓✓         86%
+05       read_existing_file             ✓✓✓✓✓✓✓         100%
+06       run_simple_command             ✓✓✓✓✗✗✗         57%
+07       list_files                     ✓✓✓✓✓✓✓         100%
+08       multi_step_task                ✓✗✓✗✓✓✗         57%
+09       create_dockerfile              ✗✗✗✗✗✗✗         0%
+10       handle_missing_env             ✓✓✓✓✓✓✓         100%
+======================================================================

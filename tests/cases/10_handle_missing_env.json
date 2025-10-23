@@ -1,0 +1,31 @@
+{
+  "id": "10",
+  "name": "handle_missing_env",
+  "description": "Handle missing environment variable gracefully",
+  "category": "error_handling",
+
+  "setup": {
+    "env_vars": {},
+    "files": {}
+  },
+
+  "instruction": "Get the value of the MISSING_VAR environment variable",
+  "max_steps": 3,
+
+  "assertions": [
+    {
+      "type": "tool_called",
+      "tool": "get_env",
+      "args": {"key": "MISSING_VAR"}
+    },
+    {
+      "type": "final_answer_contains",
+      "values": ["ERROR", "not set"],
+      "case_sensitive": false,
+      "match_any": true
+    },
+    {
+      "type": "completed_successfully"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "id": "02",
+  "name": "read_multiple_env_vars",
+  "category": "env_vars",
+  "status": "PASS",
+  "duration": 20.383300065994263,
+  "steps": 0,
+  "assertions_passed": 3,
+  "assertions_failed": 0,
+  "failures": [],
+  "final_answer": "DOCKER_USER value: testuser, AWS_REGION value: us-east-1",
+  "tool_calls": [
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "DOCKER_USER"
+      }
+    },
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "AWS_REGION"
+      }
+    }
+  ],
+  "errors": []
+}

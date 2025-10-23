@@ -1,0 +1,47 @@
+{
+  "id": "08",
+  "name": "multi_step_task",
+  "description": "Multi-step task: read env, write file, verify",
+  "category": "multi_step",
+
+  "setup": {
+    "env_vars": {
+      "APP_NAME": "myapp"
+    },
+    "files": {}
+  },
+
+  "instruction": "Read the APP_NAME environment variable, create a file app.txt with its value, then read the file back to verify",
+  "max_steps": 4,
+
+  "assertions": [
+    {
+      "type": "tool_called",
+      "tool": "get_env",
+      "args": {"key": "APP_NAME"}
+    },
+    {
+      "type": "tool_called",
+      "tool": "write_file",
+      "args": {"path": "app.txt"}
+    },
+    {
+      "type": "tool_called",
+      "tool": "read_file",
+      "args": {"path": "app.txt"}
+    },
+    {
+      "type": "file_exists",
+      "path": "app.txt"
+    },
+    {
+      "type": "file_content_contains",
+      "path": "app.txt",
+      "values": ["myapp"],
+      "case_sensitive": false
+    },
+    {
+      "type": "completed_successfully"
+    }
+  ]
+}

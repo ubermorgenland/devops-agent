@@ -1,0 +1,40 @@
+{
+  "id": "05",
+  "name": "read_existing_file",
+  "category": "file_ops",
+  "status": "FAIL",
+  "duration": 25.26693606376648,
+  "steps": 0,
+  "assertions_passed": 1,
+  "assertions_failed": 2,
+  "failures": [
+    {
+      "assertion": "final_answer_contains",
+      "reason": "Missing values in final answer: ['sample data']",
+      "expected": [
+        "sample data"
+      ],
+      "actual": ""
+    },
+    {
+      "assertion": "completed_successfully",
+      "reason": "Test completed with errors",
+      "expected": null,
+      "actual": [
+        "'ToolCall' object has no attribute 'function'"
+      ]
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [
+    {
+      "name": "read_file",
+      "arguments": {
+        "path": "input.txt"
+      }
+    }
+  ],
+  "errors": [
+    "'ToolCall' object has no attribute 'function'"
+  ]
+}

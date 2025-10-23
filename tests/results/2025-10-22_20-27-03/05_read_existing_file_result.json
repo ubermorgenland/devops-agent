@@ -1,0 +1,21 @@
+{
+  "id": "05",
+  "name": "read_existing_file",
+  "category": "file_ops",
+  "status": "PASS",
+  "duration": 38.631242990493774,
+  "steps": 0,
+  "assertions_passed": 3,
+  "assertions_failed": 0,
+  "failures": [],
+  "final_answer": "sample data content",
+  "tool_calls": [
+    {
+      "name": "read_file",
+      "arguments": {
+        "path": "input.txt"
+      }
+    }
+  ],
+  "errors": []
+}

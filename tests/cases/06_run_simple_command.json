@@ -1,0 +1,29 @@
+{
+  "id": "06",
+  "name": "run_simple_command",
+  "description": "Execute a simple shell command",
+  "category": "commands",
+
+  "setup": {
+    "env_vars": {},
+    "files": {}
+  },
+
+  "instruction": "Run the command 'echo Hello DevOps'",
+  "max_steps": 3,
+
+  "assertions": [
+    {
+      "type": "tool_called",
+      "tool": "bash"
+    },
+    {
+      "type": "final_answer_contains",
+      "values": ["Hello", "DevOps"],
+      "case_sensitive": false
+    },
+    {
+      "type": "completed_successfully"
+    }
+  ]
+}

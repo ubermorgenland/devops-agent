@@ -1,0 +1,45 @@
+======================================================================
+VARIABILITY TEST REPORT
+======================================================================
+Total runs: 7
+Total duration: 1843.9s (30.7 minutes)
+Average pass rate: 21.4%
+Pass rate range: 0.0% - 40.0%
+Average run duration: 263.4s
+
+======================================================================
+TEST CONSISTENCY ANALYSIS
+======================================================================
+
+⚠  INCONSISTENT (2 tests):
+   03: create_simple_file [4/7] ✗✓✓✗✓✗✓
+   10: handle_missing_env [3/7] ✗✗✓✓✓✗✗
+
+✗  MOSTLY FAILING (5 tests):
+   01: read_env_var [1/7] ✗✓✗✗✗✗✗
+   05: read_existing_file [2/7] ✗✗✓✗✗✓✗
+   06: run_simple_command [1/7] ✗✓✗✗✗✗✗
+   07: list_files [2/7] ✗✗✓✗✓✗✗
+   09: create_dockerfile [2/7] ✗✓✗✗✗✓✗
+
+❌ ALWAYS FAILING (3 tests):
+   02: read_multiple_env_vars [0/7]
+   04: create_file_from_env [0/7]
+   08: multi_step_task [0/7]
+
+======================================================================
+TEST RESULT MATRIX
+======================================================================
+Test ID  Test Name                      Results             
+----------------------------------------------------------------------
+01       read_env_var                   ✗✓✗✗✗✗✗         14%
+02       read_multiple_env_vars         ✗✗✗✗✗✗✗         0%
+03       create_simple_file             ✗✓✓✗✓✗✓         57%
+04       create_file_from_env           ✗✗✗✗✗✗✗         0%
+05       read_existing_file             ✗✗✓✗✗✓✗         29%
+06       run_simple_command             ✗✓✗✗✗✗✗         14%
+07       list_files                     ✗✗✓✗✓✗✗         29%
+08       multi_step_task                ✗✗✗✗✗✗✗         0%
+09       create_dockerfile              ✗✓✗✗✗✓✗         29%
+10       handle_missing_env             ✗✗✓✓✓✗✗         43%
+======================================================================

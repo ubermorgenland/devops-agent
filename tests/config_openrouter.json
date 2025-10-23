@@ -1,0 +1,11 @@
+{
+  "backend": "openrouter",
+  "default_model": "qwen/qwen3-1.7b",
+  "default_max_steps": 4,
+  "save_results": true,
+  "save_full_logs": true,
+  "temp_dir_prefix": "ollama_test_",
+  "cleanup_temp_dirs": true,
+  "timeout_per_test": 120,
+  "verbose": false
+}

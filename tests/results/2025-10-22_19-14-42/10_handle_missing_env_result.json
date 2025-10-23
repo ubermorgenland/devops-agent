@@ -1,0 +1,41 @@
+{
+  "id": "10",
+  "name": "handle_missing_env",
+  "category": "error_handling",
+  "status": "FAIL",
+  "duration": 7.412236928939819,
+  "steps": 0,
+  "assertions_passed": 1,
+  "assertions_failed": 2,
+  "failures": [
+    {
+      "assertion": "final_answer_contains",
+      "reason": "None of the expected values found in final answer",
+      "expected": [
+        "error",
+        "not set"
+      ],
+      "actual": ""
+    },
+    {
+      "assertion": "completed_successfully",
+      "reason": "Test completed with errors",
+      "expected": null,
+      "actual": [
+        "'ToolCall' object has no attribute 'function'"
+      ]
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "MISSING_VAR"
+      }
+    }
+  ],
+  "errors": [
+    "'ToolCall' object has no attribute 'function'"
+  ]
+}

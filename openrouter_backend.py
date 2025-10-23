@@ -1,4 +1,4 @@
-# ollama_backend.py
+# openrouter_backend.py
 import json, re, uuid, os
 import requests
 from smolagents.models import ChatMessage
@@ -9,67 +9,62 @@ STRICT_INSTRUCTIONS = """
 You are a DevOps automation agent that executes tasks step-by-step using tools.
 
 CRITICAL RULES:
-1. Use ONLY <tool_call> XML tags for tool calls (see examples below)
-2. Call ONE tool at a time, then WAIT for the response
-3. NEVER call final_answer together with other tools - it must be alone
-4. When you receive tool responses, use the ACTUAL values in your next tool calls
-5. Never include natural language outside tool calls
-6. If you encounter an error, try a different approach
-7. Do NOT repeat the same failing tool call twice with identical arguments
+1. Respond with ONLY a single JSON tool call per message
+2. Use format: {"name": "tool_name", "arguments": {"arg1": "value1", "arg2": "value2"}}
+3. Call ONE tool at a time, then WAIT for the response
+4. NEVER call final_answer together with other tools - it must be alone
+5. When you receive tool responses like "The value is: testuser", use that EXACT value in your answer
+6. ALWAYS include the actual value returned by tools in your final_answer
+7. Never include natural language outside tool calls
+8. If you encounter an error, try a different approach
+9. Do NOT repeat the same failing tool call twice with identical arguments
 
 TOOL CALL FORMAT:
-<tool_call>
 {"name": "tool_name", "arguments": {"arg1": "value1", "arg2": "value2"}}
-</tool_call>
 
 EXAMPLES:
 
-Example 1 - Getting a value and using it:
+Example 1 - Getting an environment variable:
 Step 1 - Call tool:
-<tool_call>
 {"name": "get_env", "arguments": {"key": "DOCKER_USER"}}
-</tool_call>
 
-Step 2 - After receiving "The value is: testuser", use that value:
-<tool_call>
-{"name": "final_answer", "arguments": {"answer": "DOCKER_USER is testuser"}}
-</tool_call>
+Step 2 - You receive: "The value is: testuser"
+Step 3 - Answer with the ACTUAL value you received:
+{"name": "final_answer", "arguments": {"answer": "testuser"}}
 
-Example 2 - Using value in another tool:
-Step 1:
-<tool_call>
-{"name": "get_env", "arguments": {"key": "DOCKER_USER"}}
-</tool_call>
+Example 2 - Using returned value in another tool:
+Step 1 - Call tool:
+{"name": "get_env", "arguments": {"key": "APP_NAME"}}
 
-Step 2 - After receiving "The value is: testuser":
-<tool_call>
-{"name": "write_file", "arguments": {"path": "config.txt", "content": "User: testuser"}}
-</tool_call>
+Step 2 - You receive: "The value is: myapp"
+Step 3 - Use that exact value:
+{"name": "write_file", "arguments": {"path": "config.txt", "content": "App: myapp"}}
 
-Example 3 - Completing task:
-<tool_call>
-{"name": "final_answer", "arguments": {"answer": "Task completed"}}
-</tool_call>
+Example 3 - Completing a task:
+{"name": "final_answer", "arguments": {"answer": "Task completed successfully"}}
 
-IMPORTANT:
-- Call tools ONE AT A TIME
-- WAIT for response before calling next tool
-- Use ACTUAL values from responses (e.g., "testuser"), not placeholders
-- Arguments must be valid JSON (no f-strings, no variables)
+CRITICAL REMINDERS:
+- Always use ACTUAL values from tool responses, not variable names
+- Include the returned value in your final_answer
+- One tool call per message only
+- Wait for the response before calling the next tool
 """
 
 
-class OllamaChat:
+class OpenRouterChat:
     """
-    SmolAgents-compatible Ollama backend.
-    Simplifies system prompt, flattens messages, and supports simple tool call parsing.
+    SmolAgents-compatible OpenRouter backend.
+    Uses OpenRouter API instead of local Ollama.
     """
 
-    def __init__(self, model="qwen3:1.7b", #"hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K"
-                 endpoint="http://localhost:11434/api/chat"):
+    def __init__(self, model="qwen/qwen-turbo",
+                 api_key=None):
         self.model = model
-        self.endpoint = endpoint
-        self.name = "OllamaChat"
+        self.api_key = api_key or os.environ.get("OPEN_ROUTER_KEY")
+        if not self.api_key:
+            raise ValueError("OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable.")
+        self.endpoint = "https://openrouter.ai/api/v1/chat/completions"
+        self.name = "OpenRouterChat"
         self.supports_streaming = False
 
     # -------------------------------------------------------------------------
@@ -77,7 +72,7 @@ class OllamaChat:
     # -------------------------------------------------------------------------
 
     def _serialize_messages(self, messages):
-        """Flatten SmolAgents ChatMessages into Ollama-compatible format."""
+        """Flatten SmolAgents ChatMessages into OpenRouter-compatible format."""
         serialized = []
         for m in messages:
             # Determine role
@@ -100,17 +95,15 @@ class OllamaChat:
             else:
                 content = str(raw_content)
 
-            # Convert role to string and normalize for QWEN
+            # Convert role to string and normalize
             role_str = str(role).split(".")[-1].lower()  # MessageRole.TOOL_RESPONSE → "tool_response"
 
-            # Map SmolAgents roles to QWEN's expected roles
+            # Map SmolAgents roles to OpenRouter's expected roles
             if role_str == "tool_response":
-                role_str = "tool"  # QWEN expects "tool" for tool responses
+                role_str = "user"  # OpenRouter doesn't have "tool" role, use user for tool responses
 
             serialized.append({"role": role_str, "content": content})
         return serialized
-
-
 
     def _build_tool_list(self, tools):
         """
@@ -144,47 +137,38 @@ class OllamaChat:
                 args_section = "  (no arguments)"
             lines.append(f"- {name}:\n{args_section}\n  Description: {desc}")
 
-        # 3️⃣ Tool usage examples (using XML format)
+        # 3️⃣ Tool usage examples (plain JSON format for OpenRouter)
         examples = [
             "",
             "Example tool calls:",
-            '<tool_call>',
             '{"name": "get_env", "arguments": {"key": "DOCKER_USER"}}',
-            '</tool_call>',
-            '<tool_call>',
             '{"name": "bash", "arguments": {"command": "ls *.txt"}}',
-            '</tool_call>',
-            '<tool_call>',
             '{"name": "write_file", "arguments": {"path": "Dockerfile", "content": "FROM alpine\\nCMD echo hello"}}',
-            '</tool_call>',
             "",
             "When you are done, finalize with:",
-            '<tool_call>',
             '{"name": "final_answer", "arguments": {"answer": "Task completed"}}',
-            '</tool_call>',
         ]
 
         return "\n".join([system_section] + lines + examples)
+
     # -------------------------------------------------------------------------
     # Core API
     # -------------------------------------------------------------------------
 
-
     def generate(self, messages, tools=None, stop_sequences=None, **kwargs):
         """
-        Generate a single assistant message.
-        This trims the system prompt and adds a compact tool schema that Ollama can understand.
+        Generate a single assistant message using OpenRouter API.
         """
-        
+
         tools = tools or kwargs.get("tools") or getattr(self, "tools", [])
 
-        # 1️⃣ Convert messages into mutable list
+        # 1️⃣ Convert messages into OpenRouter format
         flattened_msgs = self._serialize_messages(messages)
 
         # 2️⃣ Patch the system prompt
         for msg in flattened_msgs:
             role_str = str(msg.get("role", "")).split(".")[-1].lower()
-            msg["role"] = role_str  # Normalize!
+            msg["role"] = role_str
 
             if role_str == "system":
                 msg["content"] = (
@@ -193,33 +177,48 @@ class OllamaChat:
                     + self._build_tool_list(tools or [])
                 )
 
-
-        # 3️⃣ POST to Ollama
+        # 3️⃣ POST to OpenRouter
         payload = {
             "model": self.model,
             "messages": flattened_msgs,
-            "stream": False,
+            "temperature": 0,  # Deterministic
+            "max_tokens": 500,
+        }
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
         }
 
         # Debug: print what is sent
-        print("\n=== PAYLOAD SENT TO OLLAMA (trimmed) ===")
-        print(json.dumps(payload, indent=2) + "...\n")
+        print("\n=== PAYLOAD SENT TO OPENROUTER (trimmed) ===")
+        print(f"Model: {payload['model']}")
+        print(f"Messages: {len(flattened_msgs)}")
+        print(f"Last user message: {flattened_msgs[-1]['content'][:100] if flattened_msgs else 'N/A'}...\n")
 
-        resp = requests.post(self.endpoint, json=payload, timeout=300)
+        try:
+            resp = requests.post(self.endpoint, json=payload, headers=headers, timeout=120)
+        except requests.Timeout:
+            raise RuntimeError("OpenRouter request timeout (120s)")
+
         if not resp.ok:
-            raise RuntimeError(f"Ollama returned {resp.status_code}: {resp.text}")
+            error_text = resp.text
+            try:
+                error_json = resp.json()
+                error_text = error_json.get("error", {}).get("message", error_text)
+            except:
+                pass
+            raise RuntimeError(f"OpenRouter returned {resp.status_code}: {error_text}")
 
         data = resp.json()
 
-        print("\n🟩 === [RECV] Ollama Response ===")
-        print(json.dumps(data, indent=2, ensure_ascii=False))
+        print("\n🟩 === [RECV] OpenRouter Response ===")
+        print(json.dumps(data, indent=2, ensure_ascii=False)[:500])
 
         # 4️⃣ Extract assistant content
         content = ""
-        if "message" in data:
-            content = data["message"].get("content", "").strip()
-        elif "response" in data:
-            content = data["response"].strip()
+        if "choices" in data and len(data["choices"]) > 0:
+            content = data["choices"][0]["message"].get("content", "").strip()
         else:
             content = str(data)
 
@@ -232,11 +231,8 @@ class OllamaChat:
 
     def parse_tool_calls(self, message):
         """
-        Parse model output in QWEN's native XML format:
-        <tool_call>
-        {"name": "tool_name", "arguments": {"arg": "value"}}
-        </tool_call>
-        Return SmolAgents-compatible ChatToolCall list.
+        Parse model output in plain JSON format.
+        OpenRouter models return clean JSON: {"name": "tool_name", "arguments": {...}}
         """
         # --- Universal import across SmolAgents versions ---
         try:
@@ -261,12 +257,17 @@ class OllamaChat:
         text = getattr(message, "content", str(message))
         calls = []
 
-        # Try parsing XML <tool_call> tags first (QWEN's official format)
-        for match in re.finditer(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", text, re.DOTALL):
+        print(f"\n🔍 [parse_tool_calls] Parsing message content: {text[:200]}")
+
+        # Parse plain JSON tool calls (OpenRouter's native format)
+        # Pattern: {"name": "...", "arguments": {...}}
+        for match in re.finditer(r'\{[^{}]*"name"[^{}]*"arguments"[^{}]*\}', text):
             try:
-                tool_data = json.loads(match.group(1))
+                tool_data = json.loads(match.group())
                 name = tool_data.get("name", "unknown")
                 args = tool_data.get("arguments", {})
+
+                print(f"   ✓ Found tool call: {name}")
 
                 func = FunctionCall(name=name, arguments=args)
 
@@ -280,29 +281,9 @@ class OllamaChat:
                 print(f"⚠️  WARNING: Failed to parse tool call JSON: {e}")
                 continue
 
-        # If no XML tags found, try markdown JSON blocks (QWEN small models often use this)
-        if not calls:
-            for match in re.finditer(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL):
-                try:
-                    tool_data = json.loads(match.group(1))
-                    # Check if it looks like a tool call (has "name" and "arguments")
-                    if "name" in tool_data and "arguments" in tool_data:
-                        name = tool_data.get("name")
-                        args = tool_data.get("arguments", {})
-
-                        func = FunctionCall(name=name, arguments=args)
-
-                        try:
-                            call = ChatToolCall(id=str(uuid.uuid4()), function=func)
-                        except TypeError:
-                            call = ChatToolCall(function=func)
-
-                        calls.append(call)
-                except json.JSONDecodeError:
-                    continue
+        print(f"   📊 Total calls found: {len(calls)}")
 
         # 🛡️ SAFETY: If final_answer is present with other tools, remove it
-        # This prevents the agent from getting stuck in an infinite loop
         has_final_answer = any(call.function.name == "final_answer" for call in calls)
         has_other_tools = any(call.function.name != "final_answer" for call in calls)
 

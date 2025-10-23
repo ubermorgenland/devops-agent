@@ -1,0 +1,32 @@
+{
+  "id": "01",
+  "name": "read_env_var",
+  "description": "Read DOCKER_USER environment variable",
+  "category": "env_vars",
+
+  "setup": {
+    "env_vars": {
+      "DOCKER_USER": "testuser"
+    },
+    "files": {}
+  },
+
+  "instruction": "What is the value of the DOCKER_USER environment variable?",
+  "max_steps": 3,
+
+  "assertions": [
+    {
+      "type": "tool_called",
+      "tool": "get_env",
+      "args": {"key": "DOCKER_USER"}
+    },
+    {
+      "type": "completed_successfully"
+    },
+    {
+      "type": "final_answer_contains",
+      "values": ["testuser"],
+      "case_sensitive": false
+    }
+  ]
+}

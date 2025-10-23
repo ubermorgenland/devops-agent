@@ -1,0 +1,31 @@
+{
+  "id": "10",
+  "name": "handle_missing_env",
+  "category": "error_handling",
+  "status": "FAIL",
+  "duration": 9.638017177581787,
+  "steps": 0,
+  "assertions_passed": 2,
+  "assertions_failed": 1,
+  "failures": [
+    {
+      "assertion": "final_answer_contains",
+      "reason": "None of the expected values found in final answer",
+      "expected": [
+        "error",
+        "not set"
+      ],
+      "actual": "value of missing_var is retrieved"
+    }
+  ],
+  "final_answer": "Value of MISSING_VAR is retrieved",
+  "tool_calls": [
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "MISSING_VAR"
+      }
+    }
+  ],
+  "errors": []
+}

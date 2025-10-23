@@ -1,0 +1,35 @@
+{
+  "id": "03",
+  "name": "create_simple_file",
+  "description": "Create a file with static content",
+  "category": "file_ops",
+
+  "setup": {
+    "env_vars": {},
+    "files": {}
+  },
+
+  "instruction": "Create a file called hello.txt with the content 'Hello World'",
+  "max_steps": 3,
+
+  "assertions": [
+    {
+      "type": "tool_called",
+      "tool": "write_file",
+      "args": {"path": "hello.txt"}
+    },
+    {
+      "type": "file_exists",
+      "path": "hello.txt"
+    },
+    {
+      "type": "file_content_contains",
+      "path": "hello.txt",
+      "values": ["Hello World"],
+      "case_sensitive": false
+    },
+    {
+      "type": "completed_successfully"
+    }
+  ]
+}
