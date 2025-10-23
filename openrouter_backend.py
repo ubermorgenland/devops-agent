@@ -4,50 +4,59 @@ import requests
 from smolagents.models import ChatMessage
 import platform
 import shutil
+import time
 
 STRICT_INSTRUCTIONS = """
 You are a DevOps automation agent that executes tasks step-by-step using tools.
 
 CRITICAL RULES:
-1. Respond with ONLY a single JSON tool call per message
-2. Use format: {"name": "tool_name", "arguments": {"arg1": "value1", "arg2": "value2"}}
-3. Call ONE tool at a time, then WAIT for the response
-4. NEVER call final_answer together with other tools - it must be alone
-5. When you receive tool responses like "The value is: testuser", use that EXACT value in your answer
-6. ALWAYS include the actual value returned by tools in your final_answer
-7. Never include natural language outside tool calls
-8. If you encounter an error, try a different approach
-9. Do NOT repeat the same failing tool call twice with identical arguments
+1. Use ONLY <tool_call> XML tags for tool calls (see examples below)
+2. Call ONE tool at a time, then WAIT for the response
+3. NEVER call final_answer together with other tools - it must be alone
+4. When you receive tool responses, use the ACTUAL values in your next tool calls
+5. Never include natural language outside tool calls
+6. If you encounter an error, try a different approach
+7. Do NOT repeat the same failing tool call twice with identical arguments
 
 TOOL CALL FORMAT:
+<tool_call>
 {"name": "tool_name", "arguments": {"arg1": "value1", "arg2": "value2"}}
+</tool_call>
 
 EXAMPLES:
 
-Example 1 - Getting an environment variable:
+Example 1 - Getting a value and using it:
 Step 1 - Call tool:
+<tool_call>
 {"name": "get_env", "arguments": {"key": "DOCKER_USER"}}
+</tool_call>
 
-Step 2 - You receive: "The value is: testuser"
-Step 3 - Answer with the ACTUAL value you received:
+Step 2 - After receiving "The value is: testuser", use that value:
+<tool_call>
 {"name": "final_answer", "arguments": {"answer": "testuser"}}
+</tool_call>
 
-Example 2 - Using returned value in another tool:
-Step 1 - Call tool:
+Example 2 - Using value in another tool:
+Step 1:
+<tool_call>
 {"name": "get_env", "arguments": {"key": "APP_NAME"}}
+</tool_call>
 
-Step 2 - You receive: "The value is: myapp"
-Step 3 - Use that exact value:
+Step 2 - After receiving "The value is: myapp":
+<tool_call>
 {"name": "write_file", "arguments": {"path": "config.txt", "content": "App: myapp"}}
+</tool_call>
 
-Example 3 - Completing a task:
-{"name": "final_answer", "arguments": {"answer": "Task completed successfully"}}
+Example 3 - Completing task:
+<tool_call>
+{"name": "final_answer", "arguments": {"answer": "Task completed"}}
+</tool_call>
 
-CRITICAL REMINDERS:
-- Always use ACTUAL values from tool responses, not variable names
-- Include the returned value in your final_answer
-- One tool call per message only
-- Wait for the response before calling the next tool
+IMPORTANT:
+- Call tools ONE AT A TIME
+- WAIT for response before calling next tool
+- Use ACTUAL values from responses (e.g., "testuser"), not placeholders
+- Arguments must be valid JSON (no f-strings, no variables)
 """
 
 
@@ -58,7 +67,8 @@ class OpenRouterChat:
     """
 
     def __init__(self, model="qwen/qwen-turbo",
-                 api_key=None):
+                 api_key=None,
+                 rate_limit_delay=3.0):
         self.model = model
         self.api_key = api_key or os.environ.get("OPEN_ROUTER_KEY")
         if not self.api_key:
@@ -66,6 +76,8 @@ class OpenRouterChat:
         self.endpoint = "https://openrouter.ai/api/v1/chat/completions"
         self.name = "OpenRouterChat"
         self.supports_streaming = False
+        self.rate_limit_delay = rate_limit_delay  # Delay between requests in seconds (20/min = 3s)
+        self.last_request_time = 0
 
     # -------------------------------------------------------------------------
     # Helpers
@@ -157,7 +169,7 @@ class OpenRouterChat:
 
     def generate(self, messages, tools=None, stop_sequences=None, **kwargs):
         """
-        Generate a single assistant message using OpenRouter API.
+        Generate a single assistant message using OpenRouter API with exponential backoff retry.
         """
 
         tools = tools or kwargs.get("tools") or getattr(self, "tools", [])
@@ -196,19 +208,61 @@ class OpenRouterChat:
         print(f"Messages: {len(flattened_msgs)}")
         print(f"Last user message: {flattened_msgs[-1]['content'][:100] if flattened_msgs else 'N/A'}...\n")
 
-        try:
-            resp = requests.post(self.endpoint, json=payload, headers=headers, timeout=120)
-        except requests.Timeout:
-            raise RuntimeError("OpenRouter request timeout (120s)")
+        # 🛡️ RATE LIMITING: Respect OpenRouter's limits
+        # qwen3-coder needs stricter rate limiting (appears to have tighter limits)
+        # qwen3-8b can handle faster rates
+        rate_limit_enabled = self.rate_limit_delay > 0
+        if rate_limit_enabled:
+            elapsed = time.time() - self.last_request_time
+            if elapsed < self.rate_limit_delay:
+                sleep_time = self.rate_limit_delay - elapsed
+                # Only print on first request to avoid spam
+                if self.last_request_time > 0 and sleep_time > 0.1:
+                    pass  # Silently rate limit
+                time.sleep(sleep_time)
 
-        if not resp.ok:
-            error_text = resp.text
+        # 🔄 EXPONENTIAL BACKOFF: Retry on 429 (rate limit) errors
+        max_retries = 5
+        base_delay = 1.0  # Start with 1 second
+        max_delay = 60.0  # Cap at 60 seconds
+
+        for attempt in range(max_retries):
             try:
-                error_json = resp.json()
-                error_text = error_json.get("error", {}).get("message", error_text)
-            except:
-                pass
-            raise RuntimeError(f"OpenRouter returned {resp.status_code}: {error_text}")
+                self.last_request_time = time.time()
+                resp = requests.post(self.endpoint, json=payload, headers=headers, timeout=120)
+            except requests.Timeout:
+                raise RuntimeError("OpenRouter request timeout (120s)")
+
+            # Handle 429 (Too Many Requests) with exponential backoff
+            if resp.status_code == 429:
+                if attempt < max_retries - 1:
+                    # Calculate exponential backoff delay
+                    delay = min(base_delay * (2 ** attempt), max_delay)
+                    print(f"⏳ Rate limited (429). Retry {attempt + 1}/{max_retries} in {delay:.1f}s...")
+                    time.sleep(delay)
+                    continue
+                else:
+                    # Max retries exceeded
+                    error_text = resp.text
+                    try:
+                        error_json = resp.json()
+                        error_text = error_json.get("error", {}).get("message", error_text)
+                    except:
+                        pass
+                    raise RuntimeError(f"OpenRouter returned {resp.status_code}: {error_text} (after {max_retries} retries)")
+
+            # Handle other errors
+            if not resp.ok:
+                error_text = resp.text
+                try:
+                    error_json = resp.json()
+                    error_text = error_json.get("error", {}).get("message", error_text)
+                except:
+                    pass
+                raise RuntimeError(f"OpenRouter returned {resp.status_code}: {error_text}")
+
+            # Success - break out of retry loop
+            break
 
         data = resp.json()
 
@@ -231,8 +285,10 @@ class OpenRouterChat:
 
     def parse_tool_calls(self, message):
         """
-        Parse model output in plain JSON format.
-        OpenRouter models return clean JSON: {"name": "tool_name", "arguments": {...}}
+        Parse model output in XML format (same as Ollama backend).
+        <tool_call>
+        {"name": "tool_name", "arguments": {"arg": "value"}}
+        </tool_call>
         """
         # --- Universal import across SmolAgents versions ---
         try:
@@ -257,17 +313,12 @@ class OpenRouterChat:
         text = getattr(message, "content", str(message))
         calls = []
 
-        print(f"\n🔍 [parse_tool_calls] Parsing message content: {text[:200]}")
-
-        # Parse plain JSON tool calls (OpenRouter's native format)
-        # Pattern: {"name": "...", "arguments": {...}}
-        for match in re.finditer(r'\{[^{}]*"name"[^{}]*"arguments"[^{}]*\}', text):
+        # Try parsing XML <tool_call> tags (our standardized format)
+        for match in re.finditer(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", text, re.DOTALL):
             try:
-                tool_data = json.loads(match.group())
+                tool_data = json.loads(match.group(1))
                 name = tool_data.get("name", "unknown")
                 args = tool_data.get("arguments", {})
-
-                print(f"   ✓ Found tool call: {name}")
 
                 func = FunctionCall(name=name, arguments=args)
 
@@ -281,7 +332,25 @@ class OpenRouterChat:
                 print(f"⚠️  WARNING: Failed to parse tool call JSON: {e}")
                 continue
 
-        print(f"   📊 Total calls found: {len(calls)}")
+        # If no XML tags found, try markdown JSON blocks (fallback)
+        if not calls:
+            for match in re.finditer(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL):
+                try:
+                    tool_data = json.loads(match.group(1))
+                    if "name" in tool_data and "arguments" in tool_data:
+                        name = tool_data.get("name")
+                        args = tool_data.get("arguments", {})
+
+                        func = FunctionCall(name=name, arguments=args)
+
+                        try:
+                            call = ChatToolCall(id=str(uuid.uuid4()), function=func)
+                        except TypeError:
+                            call = ChatToolCall(function=func)
+
+                        calls.append(call)
+                except json.JSONDecodeError:
+                    continue
 
         # 🛡️ SAFETY: If final_answer is present with other tools, remove it
         has_final_answer = any(call.function.name == "final_answer" for call in calls)

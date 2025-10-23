@@ -1,0 +1,190 @@
+{
+  "timestamp": "2025-10-23_16-34-59",
+  "model": "qwen/qwen3-coder",
+  "total_tests": 4,
+  "passed": 0,
+  "failed": 4,
+  "pass_rate": 0.0,
+  "total_duration": 0.00025081634521484375,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 7.581710815429688e-05,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser']",
+          "expected": [
+            "testuser"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+      ]
+    },
+    {
+      "id": "02",
+      "name": "read_multiple_env_vars",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 7.414817810058594e-05,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_call_count",
+          "reason": "Tool 'get_env' called 0 times, expected 2",
+          "expected": 2,
+          "actual": 0
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+          "expected": [
+            "testuser",
+            "us-east-1"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+      ]
+    },
+    {
+      "id": "03",
+      "name": "create_simple_file",
+      "category": "file_ops",
+      "status": "FAIL",
+      "duration": 5.2928924560546875e-05,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 4,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'write_file' was not called with expected arguments",
+          "expected": {
+            "tool": "write_file",
+            "args": {
+              "path": "hello.txt"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "file_exists",
+          "reason": "File 'hello.txt' does not exist",
+          "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_q9ltup_n/hello.txt",
+          "actual": "File not found"
+        },
+        {
+          "assertion": "file_content_contains",
+          "reason": "File 'hello.txt' does not exist",
+          "expected": [
+            "Hello World"
+          ],
+          "actual": null
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+          ]
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+      ]
+    },
+    {
+      "id": "10",
+      "name": "handle_missing_env",
+      "category": "error_handling",
+      "status": "FAIL",
+      "duration": 4.792213439941406e-05,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "MISSING_VAR"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "None of the expected values found in final answer",
+          "expected": [
+            "error",
+            "not set"
+          ],
+          "actual": ""
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+          ]
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "OpenRouter API key required. Set OPEN_ROUTER_KEY environment variable."
+      ]
+    }
+  ]
+}

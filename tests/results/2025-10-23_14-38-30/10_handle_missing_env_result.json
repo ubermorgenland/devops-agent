@@ -1,0 +1,45 @@
+{
+  "id": "10",
+  "name": "handle_missing_env",
+  "category": "error_handling",
+  "status": "FAIL",
+  "duration": 2.1421408653259277,
+  "steps": 0,
+  "assertions_passed": 0,
+  "assertions_failed": 3,
+  "failures": [
+    {
+      "assertion": "tool_called",
+      "reason": "Tool 'get_env' was not called with expected arguments",
+      "expected": {
+        "tool": "get_env",
+        "args": {
+          "key": "MISSING_VAR"
+        }
+      },
+      "actual": []
+    },
+    {
+      "assertion": "final_answer_contains",
+      "reason": "None of the expected values found in final answer",
+      "expected": [
+        "error",
+        "not set"
+      ],
+      "actual": ""
+    },
+    {
+      "assertion": "completed_successfully",
+      "reason": "Test completed with errors",
+      "expected": null,
+      "actual": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [],
+  "errors": [
+    "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+  ]
+}

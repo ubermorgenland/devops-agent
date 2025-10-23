@@ -1,0 +1,212 @@
+{
+  "timestamp": "2025-10-23_16-23-48",
+  "model": "qwen/qwen3-coder",
+  "total_tests": 5,
+  "passed": 1,
+  "failed": 4,
+  "pass_rate": 0.2,
+  "total_duration": 48.560811281204224,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 1.3196558952331543,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser']",
+          "expected": [
+            "testuser"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "id": "02",
+      "name": "read_multiple_env_vars",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 12.566526174545288,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_call_count",
+          "reason": "Tool 'get_env' called 1 times, expected 2",
+          "expected": 2,
+          "actual": 1
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+          "expected": [
+            "testuser",
+            "us-east-1"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        }
+      ],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "id": "03",
+      "name": "create_simple_file",
+      "category": "file_ops",
+      "status": "FAIL",
+      "duration": 2.0425479412078857,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 4,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'write_file' was not called with expected arguments",
+          "expected": {
+            "tool": "write_file",
+            "args": {
+              "path": "hello.txt"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "file_exists",
+          "reason": "File 'hello.txt' does not exist",
+          "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_h3fd6kzz/hello.txt",
+          "actual": "File not found"
+        },
+        {
+          "assertion": "file_content_contains",
+          "reason": "File 'hello.txt' does not exist",
+          "expected": [
+            "Hello World"
+          ],
+          "actual": null
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "id": "04",
+      "name": "create_file_from_env",
+      "category": "file_ops",
+      "status": "FAIL",
+      "duration": 21.495866060256958,
+      "steps": 0,
+      "assertions_passed": 4,
+      "assertions_failed": 1,
+      "failures": [
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        },
+        {
+          "name": "write_file",
+          "arguments": {
+            "path": "config.txt",
+            "content": "User: testuser"
+          }
+        }
+      ],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "id": "05",
+      "name": "read_existing_file",
+      "category": "file_ops",
+      "status": "PASS",
+      "duration": 11.136215209960938,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "The file input.txt contains: sample data content",
+      "tool_calls": [
+        {
+          "name": "read_file",
+          "arguments": {
+            "path": "input.txt"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

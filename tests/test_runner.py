@@ -111,7 +111,8 @@ class TestRunner:
             model_name = self.config.get("default_model", "qwen3:1.7b")
 
             if backend_type == "openrouter" and OpenRouterChat:
-                model = OpenRouterChat(model=model_name)
+                rate_limit_delay = self.config.get("rate_limit_delay", 0)
+                model = OpenRouterChat(model=model_name, rate_limit_delay=rate_limit_delay)
             else:
                 model = OllamaChat(model=model_name)
 

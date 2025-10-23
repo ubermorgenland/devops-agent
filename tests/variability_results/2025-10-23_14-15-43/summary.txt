@@ -1,0 +1,10 @@
+======================================================================
+PARALLEL VARIABILITY TEST REPORT
+======================================================================
+Total runs: 7
+Total duration: 582.0s (9.7 minutes)
+Average pass rate: 57.1%
+Pass rate range: 40.0% - 80.0%
+Average run duration: 273.4s
+Total test time (sequential): 1913.6s
+Speedup from parallelization: 3.3x

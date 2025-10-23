@@ -1,0 +1,334 @@
+{
+  "timestamp": "2025-10-23_17-51-43",
+  "model": "qwen/qwen3-8b",
+  "total_tests": 10,
+  "passed": 6,
+  "failed": 4,
+  "pass_rate": 0.6,
+  "total_duration": 248.0093858242035,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "PASS",
+      "duration": 13.031183004379272,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "testuser",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "02",
+      "name": "read_multiple_env_vars",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 43.92364811897278,
+      "steps": 0,
+      "assertions_passed": 1,
+      "assertions_failed": 2,
+      "failures": [
+        {
+          "assertion": "tool_call_count",
+          "reason": "Tool 'get_env' called 0 times, expected 2",
+          "expected": 2,
+          "actual": 0
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+          "expected": [
+            "testuser",
+            "us-east-1"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": []
+    },
+    {
+      "id": "03",
+      "name": "create_simple_file",
+      "category": "file_ops",
+      "status": "PASS",
+      "duration": 11.5402991771698,
+      "steps": 0,
+      "assertions_passed": 4,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "Task completed",
+      "tool_calls": [
+        {
+          "name": "write_file",
+          "arguments": {
+            "path": "hello.txt",
+            "content": "Hello World"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "04",
+      "name": "create_file_from_env",
+      "category": "file_ops",
+      "status": "FAIL",
+      "duration": 40.144184827804565,
+      "steps": 0,
+      "assertions_passed": 1,
+      "assertions_failed": 4,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'write_file' was not called with expected arguments",
+          "expected": {
+            "tool": "write_file",
+            "args": {
+              "path": "config.txt"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "file_exists",
+          "reason": "File 'config.txt' does not exist",
+          "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_xm5t83_h/config.txt",
+          "actual": "File not found"
+        },
+        {
+          "assertion": "file_content_contains",
+          "reason": "File 'config.txt' does not exist",
+          "expected": [
+            "User:",
+            "testuser"
+          ],
+          "actual": null
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": []
+    },
+    {
+      "id": "05",
+      "name": "read_existing_file",
+      "category": "file_ops",
+      "status": "PASS",
+      "duration": 8.455802202224731,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "The contents of input.txt are: sample data content",
+      "tool_calls": [
+        {
+          "name": "read_file",
+          "arguments": {
+            "path": "input.txt"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "06",
+      "name": "run_simple_command",
+      "category": "commands",
+      "status": "PASS",
+      "duration": 17.561392068862915,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "Hello DevOps",
+      "tool_calls": [
+        {
+          "name": "bash",
+          "arguments": {
+            "command": "echo Hello DevOps"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "07",
+      "name": "list_files",
+      "category": "commands",
+      "status": "PASS",
+      "duration": 8.968897104263306,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "a.txt\nb.txt",
+      "tool_calls": [
+        {
+          "name": "bash",
+          "arguments": {
+            "command": "ls *.txt"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "08",
+      "name": "multi_step_task",
+      "category": "multi_step",
+      "status": "FAIL",
+      "duration": 43.8338360786438,
+      "steps": 0,
+      "assertions_passed": 1,
+      "assertions_failed": 5,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "APP_NAME"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'write_file' was not called with expected arguments",
+          "expected": {
+            "tool": "write_file",
+            "args": {
+              "path": "app.txt"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'read_file' was not called with expected arguments",
+          "expected": {
+            "tool": "read_file",
+            "args": {
+              "path": "app.txt"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "file_exists",
+          "reason": "File 'app.txt' does not exist",
+          "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_fza5n48n/app.txt",
+          "actual": "File not found"
+        },
+        {
+          "assertion": "file_content_contains",
+          "reason": "File 'app.txt' does not exist",
+          "expected": [
+            "myapp"
+          ],
+          "actual": null
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": []
+    },
+    {
+      "id": "09",
+      "name": "create_dockerfile",
+      "category": "multi_step",
+      "status": "FAIL",
+      "duration": 39.83241820335388,
+      "steps": 0,
+      "assertions_passed": 1,
+      "assertions_failed": 4,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'write_file' was not called with expected arguments",
+          "expected": {
+            "tool": "write_file",
+            "args": {
+              "path": "Dockerfile"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "file_exists",
+          "reason": "File 'Dockerfile' does not exist",
+          "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_z4pbmxq6/Dockerfile",
+          "actual": "File not found"
+        },
+        {
+          "assertion": "file_content_contains",
+          "reason": "File 'Dockerfile' does not exist",
+          "expected": [
+            "FROM alpine",
+            "CMD echo"
+          ],
+          "actual": null
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": []
+    },
+    {
+      "id": "10",
+      "name": "handle_missing_env",
+      "category": "error_handling",
+      "status": "PASS",
+      "duration": 20.717725038528442,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "Environment variable 'MISSING_VAR' is not set",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "MISSING_VAR"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

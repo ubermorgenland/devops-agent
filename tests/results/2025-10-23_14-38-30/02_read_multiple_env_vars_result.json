@@ -1,0 +1,47 @@
+{
+  "id": "02",
+  "name": "read_multiple_env_vars",
+  "category": "env_vars",
+  "status": "FAIL",
+  "duration": 2.4845070838928223,
+  "steps": 0,
+  "assertions_passed": 1,
+  "assertions_failed": 2,
+  "failures": [
+    {
+      "assertion": "completed_successfully",
+      "reason": "Test completed with errors",
+      "expected": null,
+      "actual": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "assertion": "final_answer_contains",
+      "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+      "expected": [
+        "testuser",
+        "us-east-1"
+      ],
+      "actual": ""
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "DOCKER_USER"
+      }
+    },
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "AWS_REGION"
+      }
+    }
+  ],
+  "errors": [
+    "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+  ]
+}

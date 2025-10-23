@@ -1,0 +1,41 @@
+{
+  "id": "06",
+  "name": "run_simple_command",
+  "category": "commands",
+  "status": "FAIL",
+  "duration": 2.554271936416626,
+  "steps": 0,
+  "assertions_passed": 1,
+  "assertions_failed": 2,
+  "failures": [
+    {
+      "assertion": "final_answer_contains",
+      "reason": "Missing values in final answer: ['hello', 'devops']",
+      "expected": [
+        "hello",
+        "devops"
+      ],
+      "actual": ""
+    },
+    {
+      "assertion": "completed_successfully",
+      "reason": "Test completed with errors",
+      "expected": null,
+      "actual": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [
+    {
+      "name": "bash",
+      "arguments": {
+        "command": "echo Hello DevOps"
+      }
+    }
+  ],
+  "errors": [
+    "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+  ]
+}

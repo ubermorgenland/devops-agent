@@ -1,6 +1,6 @@
 {
   "backend": "openrouter",
-  "default_model": "qwen/qwen3-4b:free",
+  "default_model": "qwen/qwen3-coder",
   "default_max_steps": 4,
   "save_results": true,
   "save_full_logs": true,

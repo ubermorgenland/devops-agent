@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-10-23_16-26-15",
+  "model": "qwen/qwen3-coder",
+  "total_tests": 1,
+  "passed": 1,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "total_duration": 17.414108991622925,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "PASS",
+      "duration": 17.414108991622925,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "testuser",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

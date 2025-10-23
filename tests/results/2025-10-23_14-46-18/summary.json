@@ -1,0 +1,132 @@
+{
+  "timestamp": "2025-10-23_14-46-18",
+  "model": "qwen/qwen3-coder",
+  "total_tests": 3,
+  "passed": 1,
+  "failed": 2,
+  "pass_rate": 0.3333333333333333,
+  "total_duration": 14.392197370529175,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 2.3922371864318848,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser']",
+          "expected": [
+            "testuser"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "id": "02",
+      "name": "read_multiple_env_vars",
+      "category": "env_vars",
+      "status": "PASS",
+      "duration": 7.159191131591797,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "DOCKER_USER=testuser, AWS_REGION=us-east-1",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        },
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "AWS_REGION"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "id": "03",
+      "name": "create_simple_file",
+      "category": "file_ops",
+      "status": "FAIL",
+      "duration": 4.840769052505493,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 4,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'write_file' was not called with expected arguments",
+          "expected": {
+            "tool": "write_file",
+            "args": {
+              "path": "hello.txt"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "file_exists",
+          "reason": "File 'hello.txt' does not exist",
+          "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_kojwu1s2/hello.txt",
+          "actual": "File not found"
+        },
+        {
+          "assertion": "file_content_contains",
+          "reason": "File 'hello.txt' does not exist",
+          "expected": [
+            "Hello World"
+          ],
+          "actual": null
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    }
+  ]
+}

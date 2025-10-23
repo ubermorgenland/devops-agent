@@ -1,0 +1,51 @@
+{
+  "timestamp": "2025-10-23_16-26-46",
+  "model": "qwen/qwen3-coder",
+  "total_tests": 1,
+  "passed": 0,
+  "failed": 1,
+  "pass_rate": 0.0,
+  "total_duration": 11.070132970809937,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 11.070132970809937,
+      "steps": 0,
+      "assertions_passed": 1,
+      "assertions_failed": 2,
+      "failures": [
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser']",
+          "expected": [
+            "testuser"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        }
+      ],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    }
+  ]
+}

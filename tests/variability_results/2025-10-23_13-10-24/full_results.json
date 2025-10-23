@@ -1,0 +1,3105 @@
+{
+  "timestamp": "2025-10-23_13-10-24",
+  "num_runs": 7,
+  "total_duration": 311.6127390861511,
+  "all_runs": [
+    {
+      "run_number": 1,
+      "duration": 103.65122675895691,
+      "passed": 7,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "PASS",
+          "duration": 4.203222036361694,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "testuser",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "DOCKER_USER"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 12.150949239730835,
+          "steps": 0,
+          "assertions_passed": 1,
+          "assertions_failed": 2,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": "docker_user: testuser, aws_region: us-west-2"
+            }
+          ],
+          "final_answer": "DOCKER_USER: testuser, AWS_REGION: us-west-2",
+          "tool_calls": [],
+          "errors": []
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "PASS",
+          "duration": 7.371516942977905,
+          "steps": 0,
+          "assertions_passed": 4,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "hello.txt",
+                "content": "Hello World"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "PASS",
+          "duration": 15.210379123687744,
+          "steps": 0,
+          "assertions_passed": 5,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "DOCKER_USER"
+              }
+            },
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "config.txt",
+                "content": "User: testuser"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "PASS",
+          "duration": 3.3476297855377197,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "sample data content",
+          "tool_calls": [
+            {
+              "name": "read_file",
+              "arguments": {
+                "path": "input.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 6.422497034072876,
+          "steps": 0,
+          "assertions_passed": 2,
+          "assertions_failed": 1,
+          "failures": [
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": "task completed"
+            }
+          ],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "bash",
+              "arguments": {
+                "command": "echo Hello DevOps"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "PASS",
+          "duration": 5.054556131362915,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The .txt files in the current directory are:\n- a.txt\n- b.txt",
+          "tool_calls": [
+            {
+              "name": "bash",
+              "arguments": {
+                "command": "ls *.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "PASS",
+          "duration": 18.083767652511597,
+          "steps": 0,
+          "assertions_passed": 6,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "APP_NAME"
+              }
+            },
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "app.txt",
+                "content": "myapp"
+              }
+            },
+            {
+              "name": "read_file",
+              "arguments": {
+                "path": "app.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 25.239877939224243,
+          "steps": 0,
+          "assertions_passed": 1,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_y705w_3j/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": []
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "PASS",
+          "duration": 6.548654079437256,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The environment variable 'MISSING_VAR' is not set",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "MISSING_VAR"
+              }
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    {
+      "run_number": 2,
+      "duration": 101.94527411460876,
+      "passed": 7,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "PASS",
+          "duration": 3.938638925552368,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "testuser",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "DOCKER_USER"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 13.882699728012085,
+          "steps": 0,
+          "assertions_passed": 1,
+          "assertions_failed": 2,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": "docker_user: testuser, aws_region: us-west-2"
+            }
+          ],
+          "final_answer": "DOCKER_USER: testuser, AWS_REGION: us-west-2",
+          "tool_calls": [],
+          "errors": []
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "PASS",
+          "duration": 7.660990953445435,
+          "steps": 0,
+          "assertions_passed": 4,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "hello.txt",
+                "content": "Hello World"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "PASS",
+          "duration": 15.277165174484253,
+          "steps": 0,
+          "assertions_passed": 5,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "DOCKER_USER"
+              }
+            },
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "config.txt",
+                "content": "User: testuser"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "PASS",
+          "duration": 7.378139972686768,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "sample data content",
+          "tool_calls": [
+            {
+              "name": "read_file",
+              "arguments": {
+                "path": "input.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 3.8463361263275146,
+          "steps": 0,
+          "assertions_passed": 2,
+          "assertions_failed": 1,
+          "failures": [
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": "task completed"
+            }
+          ],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "bash",
+              "arguments": {
+                "command": "echo Hello DevOps"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "PASS",
+          "duration": 8.887558937072754,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The .txt files in the current directory are:\n- a.txt\n- b.txt",
+          "tool_calls": [
+            {
+              "name": "bash",
+              "arguments": {
+                "command": "ls *.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "PASS",
+          "duration": 13.642699003219604,
+          "steps": 0,
+          "assertions_passed": 6,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "APP_NAME"
+              }
+            },
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "app.txt",
+                "content": "myapp"
+              }
+            },
+            {
+              "name": "read_file",
+              "arguments": {
+                "path": "app.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 21.67908477783203,
+          "steps": 0,
+          "assertions_passed": 1,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_mdxb_cao/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": []
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "PASS",
+          "duration": 5.736036062240601,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The environment variable 'MISSING_VAR' is not set",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "MISSING_VAR"
+              }
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    {
+      "run_number": 3,
+      "duration": 63.080132246017456,
+      "passed": 4,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "PASS",
+          "duration": 6.143484115600586,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "testuser",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "DOCKER_USER"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 10.740631818771362,
+          "steps": 0,
+          "assertions_passed": 1,
+          "assertions_failed": 2,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": "docker_user: testuser, aws_region: us-west-2"
+            }
+          ],
+          "final_answer": "DOCKER_USER: testuser, AWS_REGION: us-west-2",
+          "tool_calls": [],
+          "errors": []
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 3.001244068145752,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 1,
+          "failures": [
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "hello.txt",
+                "content": "Hello World"
+              }
+            }
+          ],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.48326992988586426,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "config.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'config.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test__x11wt8s/config.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'config.txt' does not exist",
+              "expected": [
+                "User:",
+                "testuser"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.5426778793334961,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "input.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['sample data']",
+              "expected": [
+                "sample data"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.47710180282592773,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "PASS",
+          "duration": 9.319180727005005,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The .txt files in the current directory are:\n- a.txt\n- b.txt",
+          "tool_calls": [
+            {
+              "name": "bash",
+              "arguments": {
+                "command": "ls *.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "PASS",
+          "duration": 10.03377890586853,
+          "steps": 0,
+          "assertions_passed": 6,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "Task completed",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "APP_NAME"
+              }
+            },
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "app.txt",
+                "content": "myapp"
+              }
+            },
+            {
+              "name": "read_file",
+              "arguments": {
+                "path": "app.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 17.534775018692017,
+          "steps": 0,
+          "assertions_passed": 1,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_wjv3wfx2/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": []
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "PASS",
+          "duration": 4.76590895652771,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The environment variable 'MISSING_VAR' is not set",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "MISSING_VAR"
+              }
+            }
+          ],
+          "errors": []
+        }
+      ]
+    },
+    {
+      "run_number": 4,
+      "duration": 13.288044214248657,
+      "passed": 1,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "PASS",
+          "duration": 3.479806900024414,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "testuser",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "DOCKER_USER"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 7.062510013580322,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.5672869682312012,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "hello.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_43sk3c6s/hello.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": [
+                "Hello World"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.5534241199493408,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "config.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'config.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_vcnxn2xr/config.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'config.txt' does not exist",
+              "expected": [
+                "User:",
+                "testuser"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.2523529529571533,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "input.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['sample data']",
+              "expected": [
+                "sample data"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.26493310928344727,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.29706597328186035,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['a.txt', 'b.txt']",
+              "expected": [
+                "a.txt",
+                "b.txt"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.2571370601654053,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 6,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "APP_NAME"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "app.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "app.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'app.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_w9jzbxz5/app.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'app.txt' does not exist",
+              "expected": [
+                "myapp"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.2589528560638428,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_w6f_kgul/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "FAIL",
+          "duration": 0.27533698081970215,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "MISSING_VAR"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "None of the expected values found in final answer",
+              "expected": [
+                "error",
+                "not set"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        }
+      ]
+    },
+    {
+      "run_number": 5,
+      "duration": 2.9673080444335938,
+      "passed": 0,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 0.2621309757232666,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser']",
+              "expected": [
+                "testuser"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 0.3722372055053711,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.2608218193054199,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "hello.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_p7ucg2kl/hello.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": [
+                "Hello World"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.2568478584289551,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "config.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'config.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_q7j8h4lu/config.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'config.txt' does not exist",
+              "expected": [
+                "User:",
+                "testuser"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.2529869079589844,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "input.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['sample data']",
+              "expected": [
+                "sample data"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.2853052616119385,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.2552509307861328,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['a.txt', 'b.txt']",
+              "expected": [
+                "a.txt",
+                "b.txt"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.45291590690612793,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 6,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "APP_NAME"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "app.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "app.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'app.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test__nmp39h9/app.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'app.txt' does not exist",
+              "expected": [
+                "myapp"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.2601590156555176,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_5mgh6lr8/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "FAIL",
+          "duration": 0.29749584197998047,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "MISSING_VAR"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "None of the expected values found in final answer",
+              "expected": [
+                "error",
+                "not set"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        }
+      ]
+    },
+    {
+      "run_number": 6,
+      "duration": 21.95803427696228,
+      "passed": 1,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 0.3025472164154053,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser']",
+              "expected": [
+                "testuser"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 0.30129313468933105,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.33738207817077637,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "hello.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_ntruoxwz/hello.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": [
+                "Hello World"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.5114171504974365,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "config.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'config.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_u47kpmex/config.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'config.txt' does not exist",
+              "expected": [
+                "User:",
+                "testuser"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.2584230899810791,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "input.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['sample data']",
+              "expected": [
+                "sample data"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.24759602546691895,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Rate limit exceeded: free-models-per-min. "
+          ]
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "PASS",
+          "duration": 9.399663925170898,
+          "steps": 0,
+          "assertions_passed": 3,
+          "assertions_failed": 0,
+          "failures": [],
+          "final_answer": "The .txt files in the current directory are:\n- a.txt\n- b.txt",
+          "tool_calls": [
+            {
+              "name": "bash",
+              "arguments": {
+                "command": "ls *.txt"
+              }
+            }
+          ],
+          "errors": []
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 9.71796989440918,
+          "steps": 0,
+          "assertions_passed": 5,
+          "assertions_failed": 1,
+          "failures": [
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [
+            {
+              "name": "get_env",
+              "arguments": {
+                "key": "APP_NAME"
+              }
+            },
+            {
+              "name": "write_file",
+              "arguments": {
+                "path": "app.txt",
+                "content": "myapp"
+              }
+            },
+            {
+              "name": "read_file",
+              "arguments": {
+                "path": "app.txt"
+              }
+            }
+          ],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.46994686126708984,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_ryc86juf/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "FAIL",
+          "duration": 0.3990478515625,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "MISSING_VAR"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "None of the expected values found in final answer",
+              "expected": [
+                "error",
+                "not set"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        }
+      ]
+    },
+    {
+      "run_number": 7,
+      "duration": 4.722554922103882,
+      "passed": 0,
+      "total": 10,
+      "results": [
+        {
+          "id": "01",
+          "name": "read_env_var",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 0.4525420665740967,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser']",
+              "expected": [
+                "testuser"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "02",
+          "name": "read_multiple_env_vars",
+          "category": "env_vars",
+          "status": "FAIL",
+          "duration": 0.44521188735961914,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_call_count",
+              "reason": "Tool 'get_env' called 0 times, expected 2",
+              "expected": 2,
+              "actual": 0
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['testuser', 'us-east-1']",
+              "expected": [
+                "testuser",
+                "us-east-1"
+              ],
+              "actual": ""
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "03",
+          "name": "create_simple_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.4539189338684082,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 4,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "hello.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_1s9hkdf2/hello.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'hello.txt' does not exist",
+              "expected": [
+                "Hello World"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "04",
+          "name": "create_file_from_env",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.5223047733306885,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "config.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'config.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_rv937urm/config.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'config.txt' does not exist",
+              "expected": [
+                "User:",
+                "testuser"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "05",
+          "name": "read_existing_file",
+          "category": "file_ops",
+          "status": "FAIL",
+          "duration": 0.48366498947143555,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "input.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['sample data']",
+              "expected": [
+                "sample data"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "06",
+          "name": "run_simple_command",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.42073988914489746,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['hello', 'devops']",
+              "expected": [
+                "hello",
+                "devops"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "07",
+          "name": "list_files",
+          "category": "commands",
+          "status": "FAIL",
+          "duration": 0.4198801517486572,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'bash' was not called with expected arguments",
+              "expected": {
+                "tool": "bash",
+                "args": {}
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "Missing values in final answer: ['a.txt', 'b.txt']",
+              "expected": [
+                "a.txt",
+                "b.txt"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "08",
+          "name": "multi_step_task",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.6032440662384033,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 6,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "APP_NAME"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "app.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'read_file' was not called with expected arguments",
+              "expected": {
+                "tool": "read_file",
+                "args": {
+                  "path": "app.txt"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'app.txt' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_awasvxhj/app.txt",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'app.txt' does not exist",
+              "expected": [
+                "myapp"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "09",
+          "name": "create_dockerfile",
+          "category": "multi_step",
+          "status": "FAIL",
+          "duration": 0.4293980598449707,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 5,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "DOCKER_USER"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'write_file' was not called with expected arguments",
+              "expected": {
+                "tool": "write_file",
+                "args": {
+                  "path": "Dockerfile"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "file_exists",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": "File exists at /var/folders/mx/zxxjr_8s09nd4tzcsj22kbkm0000gn/T/ollama_test_7guxmwv8/Dockerfile",
+              "actual": "File not found"
+            },
+            {
+              "assertion": "file_content_contains",
+              "reason": "File 'Dockerfile' does not exist",
+              "expected": [
+                "FROM alpine",
+                "CMD echo"
+              ],
+              "actual": null
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "id": "10",
+          "name": "handle_missing_env",
+          "category": "error_handling",
+          "status": "FAIL",
+          "duration": 0.47476816177368164,
+          "steps": 0,
+          "assertions_passed": 0,
+          "assertions_failed": 3,
+          "failures": [
+            {
+              "assertion": "tool_called",
+              "reason": "Tool 'get_env' was not called with expected arguments",
+              "expected": {
+                "tool": "get_env",
+                "args": {
+                  "key": "MISSING_VAR"
+                }
+              },
+              "actual": []
+            },
+            {
+              "assertion": "final_answer_contains",
+              "reason": "None of the expected values found in final answer",
+              "expected": [
+                "error",
+                "not set"
+              ],
+              "actual": ""
+            },
+            {
+              "assertion": "completed_successfully",
+              "reason": "Test completed with errors",
+              "expected": null,
+              "actual": [
+                "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+              ]
+            }
+          ],
+          "final_answer": "",
+          "tool_calls": [],
+          "errors": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        }
+      ]
+    }
+  ],
+  "analysis": {
+    "test_stats": {
+      "01": {
+        "name": "read_env_var",
+        "passes": 4,
+        "fails": 3,
+        "pass_rate": 0.5714285714285714,
+        "consistency": "inconsistent",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "02": {
+        "name": "read_multiple_env_vars",
+        "passes": 0,
+        "fails": 7,
+        "pass_rate": 0.0,
+        "consistency": "always_fail",
+        "statuses": [
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "03": {
+        "name": "create_simple_file",
+        "passes": 2,
+        "fails": 5,
+        "pass_rate": 0.2857142857142857,
+        "consistency": "mostly_fail",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "04": {
+        "name": "create_file_from_env",
+        "passes": 2,
+        "fails": 5,
+        "pass_rate": 0.2857142857142857,
+        "consistency": "mostly_fail",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "05": {
+        "name": "read_existing_file",
+        "passes": 2,
+        "fails": 5,
+        "pass_rate": 0.2857142857142857,
+        "consistency": "mostly_fail",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "06": {
+        "name": "run_simple_command",
+        "passes": 0,
+        "fails": 7,
+        "pass_rate": 0.0,
+        "consistency": "always_fail",
+        "statuses": [
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "07": {
+        "name": "list_files",
+        "passes": 4,
+        "fails": 3,
+        "pass_rate": 0.5714285714285714,
+        "consistency": "inconsistent",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "PASS",
+          "FAIL"
+        ]
+      },
+      "08": {
+        "name": "multi_step_task",
+        "passes": 3,
+        "fails": 4,
+        "pass_rate": 0.42857142857142855,
+        "consistency": "inconsistent",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "09": {
+        "name": "create_dockerfile",
+        "passes": 0,
+        "fails": 7,
+        "pass_rate": 0.0,
+        "consistency": "always_fail",
+        "statuses": [
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      },
+      "10": {
+        "name": "handle_missing_env",
+        "passes": 3,
+        "fails": 4,
+        "pass_rate": 0.42857142857142855,
+        "consistency": "inconsistent",
+        "statuses": [
+          "PASS",
+          "PASS",
+          "PASS",
+          "FAIL",
+          "FAIL",
+          "FAIL",
+          "FAIL"
+        ]
+      }
+    },
+    "overall_stats": {
+      "total_runs": 7,
+      "avg_pass_rate": 0.2857142857142857,
+      "min_pass_rate": 0.0,
+      "max_pass_rate": 0.7,
+      "avg_duration": 44.51608208247593
+    }
+  }
+}

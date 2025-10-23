@@ -1,0 +1,82 @@
+{
+  "timestamp": "2025-10-23_16-20-05",
+  "model": "qwen/qwen3-coder",
+  "total_tests": 2,
+  "passed": 1,
+  "failed": 1,
+  "pass_rate": 0.5,
+  "total_duration": 17.38597273826599,
+  "results": [
+    {
+      "id": "01",
+      "name": "read_env_var",
+      "category": "env_vars",
+      "status": "FAIL",
+      "duration": 1.2903919219970703,
+      "steps": 0,
+      "assertions_passed": 0,
+      "assertions_failed": 3,
+      "failures": [
+        {
+          "assertion": "tool_called",
+          "reason": "Tool 'get_env' was not called with expected arguments",
+          "expected": {
+            "tool": "get_env",
+            "args": {
+              "key": "DOCKER_USER"
+            }
+          },
+          "actual": []
+        },
+        {
+          "assertion": "completed_successfully",
+          "reason": "Test completed with errors",
+          "expected": null,
+          "actual": [
+            "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+          ]
+        },
+        {
+          "assertion": "final_answer_contains",
+          "reason": "Missing values in final answer: ['testuser']",
+          "expected": [
+            "testuser"
+          ],
+          "actual": ""
+        }
+      ],
+      "final_answer": "",
+      "tool_calls": [],
+      "errors": [
+        "Error while generating output:\nOpenRouter returned 429: Provider returned error"
+      ]
+    },
+    {
+      "id": "02",
+      "name": "read_multiple_env_vars",
+      "category": "env_vars",
+      "status": "PASS",
+      "duration": 16.09558081626892,
+      "steps": 0,
+      "assertions_passed": 3,
+      "assertions_failed": 0,
+      "failures": [],
+      "final_answer": "DOCKER_USER: testuser, AWS_REGION: us-east-1",
+      "tool_calls": [
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "DOCKER_USER"
+          }
+        },
+        {
+          "name": "get_env",
+          "arguments": {
+            "key": "AWS_REGION"
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

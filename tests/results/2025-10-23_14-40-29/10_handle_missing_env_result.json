@@ -1,0 +1,21 @@
+{
+  "id": "10",
+  "name": "handle_missing_env",
+  "category": "error_handling",
+  "status": "PASS",
+  "duration": 2.46370792388916,
+  "steps": 0,
+  "assertions_passed": 3,
+  "assertions_failed": 0,
+  "failures": [],
+  "final_answer": "Environment variable 'MISSING_VAR' is not set",
+  "tool_calls": [
+    {
+      "name": "get_env",
+      "arguments": {
+        "key": "MISSING_VAR"
+      }
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,34 @@
+{
+  "id": "01",
+  "name": "read_env_var",
+  "category": "env_vars",
+  "status": "FAIL",
+  "duration": 18.360975980758667,
+  "steps": 0,
+  "assertions_passed": 1,
+  "assertions_failed": 2,
+  "failures": [
+    {
+      "assertion": "tool_called",
+      "reason": "Tool 'get_env' was not called with expected arguments",
+      "expected": {
+        "tool": "get_env",
+        "args": {
+          "key": "DOCKER_USER"
+        }
+      },
+      "actual": []
+    },
+    {
+      "assertion": "final_answer_contains",
+      "reason": "Missing values in final answer: ['testuser']",
+      "expected": [
+        "testuser"
+      ],
+      "actual": ""
+    }
+  ],
+  "final_answer": "",
+  "tool_calls": [],
+  "errors": []
+}
