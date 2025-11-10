@@ -1,6 +1,6 @@
 # Ollama DevOps Agent
 
-A lightweight AI-powered DevOps automation tool using a fine-tuned Qwen3-1.7B model with Ollama and SmolAgents. Designed for sequential tool execution with structured reasoning.
+A lightweight AI-powered DevOps automation tool using a fine-tuned Qwen3-1.7B model with Ollama and SmolAgents. **Specialized for Docker and Kubernetes workflows** with sequential tool execution and structured reasoning.
 
 ## Features
 
@@ -15,10 +15,20 @@ A lightweight AI-powered DevOps automation tool using a fine-tuned Qwen3-1.7B mo
 
 This model is fine-tuned specifically for DevOps automation with improved reasoning capabilities:
 
+- **Docker & Kubernetes Expert**: Trained on 300+ Docker and Kubernetes workflows (90% of training data)
 - **One tool at a time**: Unlike base models that try to call all tools at once, this model executes sequentially
 - **Explicit planning**: Shows reasoning with `<think>` and `<plan>` before acting
 - **Uses actual values**: Extracts and uses real values from tool responses in subsequent calls
 - **Error handling**: Validates each step and tries alternative approaches on failure
+
+### Training Data Focus
+
+The model has been trained on:
+- **Docker workflows (44%)**: Building images, containers, Docker Compose, optimization
+- **Kubernetes operations (24%)**: Pods, deployments, services, configurations
+- **General DevOps (32%)**: File operations, system commands, basic troubleshooting
+
+⚠️ **Note**: The model has limited training on cloud-specific CLIs (gcloud, AWS CLI, Azure CLI). For best results, use it for Docker and Kubernetes tasks.
 
 ### Example Output
 
@@ -99,17 +109,42 @@ python agent.py
 
 ## Usage Examples
 
-### Kubernetes Operations
+### Docker Operations (Primary Strength)
+
+```bash
+# Build and manage images
+python agent.py "Build Docker image for Node.js application"
+
+# Container management
+python agent.py "Run Docker container with environment variables"
+
+# Docker Compose
+python agent.py "Setup Docker Compose for local development"
+
+# Optimization
+python agent.py "Optimize Docker image to reduce size"
+
+# Debugging
+python agent.py "Debug Docker container networking issues"
+```
+
+### Kubernetes Operations (Primary Strength)
 
 ```bash
 # List pods
 python agent.py "Get all pods in default namespace"
 
-# Check deployment status
-python agent.py "Show status of nginx deployment"
+# Deployments
+python agent.py "Scale Kubernetes deployment manually"
 
-# Get pod logs
-python agent.py "Get logs from the first pod matching 'nginx'"
+# Services
+python agent.py "Expose Kubernetes deployment with service"
+
+# Configuration
+python agent.py "Configure liveness probe for Kubernetes pod"
+
+# Environment
+python agent.py "Configure environment variables in Kubernetes pod"
 ```
 
 ### File Operations
@@ -178,11 +213,15 @@ The agent has access to these tools:
 
 **Training Details** (internal):
 - Dataset: 442 multi-turn DevOps conversations
+  - Docker workflows: 195 examples (44%)
+  - Kubernetes operations: 108 examples (24%)
+  - General DevOps: 139 examples (32%)
 - Method: Two-stage curriculum learning
   - Stage 1: Initial reasoning and first tool call (2 epochs)
   - Stage 2: Sequential tool execution with context (1 epoch)
 - Retention: 94% of examples after validation
 - Training time: ~30 minutes on NVIDIA L4 GPU
+- Tool usage: bash (77%), write_file (15%), final_answer (7%), read_file (1%)
 
 <!-- END INTERNAL SECTION -->
 
@@ -388,11 +427,15 @@ SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "test query" 2>&1 | tee test_output.l
 
 ## Limitations
 
+- **Training Focus**: Optimized for Docker (44%) and Kubernetes (24%) workflows. Limited training on:
+  - Cloud CLIs (gcloud, AWS CLI, Azure CLI)
+  - General system administration
+  - Database operations
 - **Model Size**: 1.7B parameter model may make mistakes on complex tasks
 - **No Memory**: Each run is independent (no conversation history between runs)
 - **Local Only**: Requires Ollama running locally
 - **Single Query**: Processes one query at a time (no interactive mode yet)
-- **Max Steps**: Limited to 4 steps by default (configurable)
+- **Max Steps**: Limited to 15 steps by default (configurable)
 
 ## Future Enhancements
 
