@@ -1,61 +1,107 @@
 # Ollama DevOps Agent
 
-A lightweight AI-powered DevOps automation tool using Ollama and SmolAgents. Designed for local development and automation tasks on resource-constrained environments (2 CPU, 4GB RAM).
+A lightweight AI-powered DevOps automation tool using a fine-tuned Qwen3-1.7B model with Ollama and SmolAgents. Designed for sequential tool execution with structured reasoning.
 
 ## Features
 
-- **Tool Calling Agent**: Execute shell commands, read/write files, and access environment variables
-- **Ollama Backend**: Uses local Ollama models (no cloud API required)
-- **Resource Efficient**: Optimized for small VMs with limited specs
-- **CLI Interface**: Easy command-line usage for quick DevOps tasks
+- **Sequential Tool Execution**: Calls ONE tool at a time, waits for results, then proceeds
+- **Structured Reasoning**: Uses `<think>` and `<plan>` tags to show thought process
+- **Validation-Aware**: Checks command outputs for errors before proceeding
+- **Multi-Step Tasks**: Handles complex workflows requiring multiple tool calls
+- **Resource Efficient**: Optimized for local development (1GB GGUF model)
+- **Fast**: Completes typical DevOps tasks in ~10 seconds
 
-## Prerequisites
+## What's Special About This Model?
 
-### 1. Install Ollama
+This model is fine-tuned specifically for DevOps automation with improved reasoning capabilities:
 
-```bash
-# macOS/Linux
-curl -fsSL https://ollama.com/install.sh | sh
+- **One tool at a time**: Unlike base models that try to call all tools at once, this model executes sequentially
+- **Explicit planning**: Shows reasoning with `<think>` and `<plan>` before acting
+- **Uses actual values**: Extracts and uses real values from tool responses in subsequent calls
+- **Error handling**: Validates each step and tries alternative approaches on failure
 
-# Or download from https://ollama.com/download
+### Example Output
+
 ```
+Task: Get all pods in default namespace
 
-### 2. Pull the Model
+Step 1: Execute kubectl command
+<tool_call>
+{"name": "bash", "arguments": {"command": "kubectl get pods -n default"}}
+</tool_call>
 
-```bash
-ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K
-```
+[Receives pod list]
 
-**Note:** For lower memory usage (< 4GB RAM), use the Q4_K quantization:
-```bash
-ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K
-```
-
-### 3. Install Python Dependencies
-
-```bash
-pip install smolagents requests
+Step 2: Provide summary
+<tool_call>
+{"name": "final_answer", "arguments": {"answer": "Successfully retrieved 10 pods in default namespace..."}}
+</tool_call>
 ```
 
 ## Quick Start
 
-### Basic Usage
+### 1. Prerequisites
 
 ```bash
-# Run with custom query
-python agent.py "List all Python files in the current directory"
+# Install Ollama (if not already installed)
+curl -fsSL https://ollama.com/install.sh | sh
 
-# Run with default query
+# Install Python dependencies
+pip install smolagents requests
+```
+
+### 2. Download the Model
+
+Download the fine-tuned GGUF model (1GB) from Google Drive:
+
+**Google Drive Folder**: https://drive.google.com/drive/folders/1tbLCJFDukULHMljylGKYRWLciV78L3TP?usp=drive_link
+
+1. Navigate to the folder and download `qwen-devops-442-q4_k_m.gguf`
+2. Place the file in this repository directory (same location as `Modelfile`)
+
+Alternatively, if you have `gdown` installed:
+
+```bash
+# Install gdown
+pip install gdown
+
+# Download directly (you may need to adjust the file ID)
+gdown --folder https://drive.google.com/drive/folders/1tbLCJFDukULHMljylGKYRWLciV78L3TP
+mv qwen-devops-442-q4_k_m.gguf .
+```
+
+**Note**: Make sure the GGUF file is in the same directory as the `Modelfile`.
+
+### 3. Create Ollama Model
+
+```bash
+ollama create qwen-devops-v2 -f Modelfile
+```
+
+### 4. Run the Agent
+
+```bash
+# Run with a query
+python agent.py "Get all pods in default namespace"
+
+# Or use default query
 python agent.py
 ```
 
-### Enable Debug Logging
+## Usage Examples
+
+### Kubernetes Operations
 
 ```bash
-SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "Your query here"
-```
+# List pods
+python agent.py "Get all pods in default namespace"
 
-## Usage Examples
+# Check deployment status
+python agent.py "Show status of nginx deployment"
+
+# Get pod logs
+python agent.py "Get logs from the first pod matching 'nginx'"
+```
 
 ### File Operations
 
@@ -67,7 +113,7 @@ python agent.py "Read the contents of /etc/hosts"
 python agent.py "Create a Dockerfile that prints Hello World"
 
 # List files
-python agent.py "Use ls command to list all .py files"
+python agent.py "List all .py files in the current directory"
 ```
 
 ### System Operations
@@ -83,17 +129,14 @@ python agent.py "Get the value of PATH environment variable"
 python agent.py "Show running Docker containers"
 ```
 
-### DevOps Tasks
+### Complex Multi-Step Tasks
 
 ```bash
-# Deploy configuration
-python agent.py "Copy nginx.conf to /etc/nginx/ and validate the config"
+# Build and validate
+python agent.py "Create a Dockerfile, then check if it exists"
 
-# Check service status
-python agent.py "Check if nginx is running and show its status"
-
-# Create deployment script
-python agent.py "Write a bash script that deploys the app to /opt/myapp"
+# Deploy workflow
+python agent.py "Get DOCKER_USER from environment and create a Dockerfile using it"
 ```
 
 ## Available Tools
@@ -104,8 +147,35 @@ The agent has access to these tools:
 |------|-------------|---------|
 | `read_file` | Read content from a file | Reading config files |
 | `write_file` | Write content to a file | Creating Dockerfiles, scripts |
-| `run_command` | Execute shell commands | ls, ps, docker, etc. |
+| `bash` | Execute shell commands | ls, kubectl, docker, etc. |
 | `get_env` | Get environment variables | AWS credentials, PATH |
+| `final_answer` | Return final result | Completing the task |
+
+## Model Information
+
+**Base Model**: Qwen3-1.7B
+**Fine-tuning**: Custom DevOps dataset with multi-turn tool calling examples
+**Format**: GGUF Q4_K_M quantization (1GB)
+**Performance**: Optimized for sequential tool execution with validation
+
+**Key Improvements over Base Model**:
+- Structured reasoning with explicit planning steps
+- One tool call per response (prevents calling all tools at once)
+- Uses actual values from tool responses in subsequent calls
+- Validates each step before proceeding
+- Better error handling and retry logic
+
+<!-- FOR PUBLIC RELEASE: Remove training specifics below this line -->
+
+**Training Details** (internal):
+- Dataset: 442 multi-turn DevOps conversations
+- Method: Two-stage curriculum learning
+  - Stage 1: Initial reasoning and first tool call (2 epochs)
+  - Stage 2: Sequential tool execution with context (1 epoch)
+- Retention: 94% of examples after validation
+- Training time: ~30 minutes on NVIDIA L4 GPU
+
+<!-- END INTERNAL SECTION -->
 
 ## Architecture
 
@@ -131,58 +201,66 @@ The agent has access to these tools:
          │
          ▼
 ┌─────────────────┐
-│ Ollama (Local)  │  Running on :11434
+│ Ollama (Local)  │  qwen-devops-v2 model
 └─────────────────┘
 ```
 
 ## Configuration
 
-### Change Model
+### Change Model Name
 
-Edit `agent.py` line 76:
+Edit `agent.py` line 151:
 
 ```python
-model = OllamaChat(model="hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K")
+model = OllamaChat(model="qwen-devops-v2")
 ```
-
-Recommended models:
-- `hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K` - Better quality (default)
-- `hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K` - Lower memory usage
-- `codellama:7b-instruct` - Alternative coder model
 
 ### Change Ollama Endpoint
 
-Edit `agent.py` line 76:
+Edit `agent.py` line 151:
 
 ```python
 model = OllamaChat(
-    model="your-model",
+    model="qwen-devops-v2",
     endpoint="http://your-server:11434/api/chat"
 )
 ```
 
-## Performance Optimization
+### Adjust Model Parameters
 
-### For Low Memory (< 4GB RAM)
+Edit `Modelfile` and recreate the model:
 
-1. Use smaller quantization:
+```
+PARAMETER temperature 0.7    # Lower for more deterministic (e.g., 0.3)
+PARAMETER top_p 0.9          # Sampling threshold
+PARAMETER num_predict 512    # Max tokens per response
+```
+
+Then recreate: `ollama create qwen-devops-v2 -f Modelfile`
+
+### Enable Debug Logging
+
+```bash
+SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "Your query here"
+```
+
+## Performance
+
+- **First response**: ~2-3 seconds (model loading)
+- **Subsequent responses**: ~1-2 seconds per tool call
+- **Multi-step tasks**: ~10 seconds total for 2-3 step workflows
+- **Memory usage**: ~1.5GB RAM for model + inference
+
+### Performance Tips
+
+1. **Keep Ollama running**: Pre-load model to avoid startup delay
    ```bash
-   ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q4_K
+   ollama run qwen-devops-v2 "hello"
    ```
 
-2. Keep Ollama running in background to avoid model loading time:
-   ```bash
-   ollama serve &
-   ```
+2. **Reduce temperature**: For more deterministic outputs, lower temperature to 0.3-0.5
 
-### For Faster Responses
-
-1. Pre-load the model:
-   ```bash
-   ollama run hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K "hello"
-   ```
-
-2. Use smaller context window (future enhancement)
+3. **Adjust max_steps**: Edit `agent.py` line 165 to limit steps (default: 4)
 
 ## Troubleshooting
 
@@ -202,28 +280,29 @@ ollama serve
 # List installed models
 ollama list
 
-# Pull the required model
-ollama pull hf.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF:Q6_K
+# If missing, recreate the model
+ollama create qwen-devops-v2 -f Modelfile
 ```
+
+### Error: "No such file: qwen-devops-442-q4_k_m.gguf"
+
+Make sure you've downloaded the GGUF file from Google Drive and placed it in the repository directory.
 
 ### Agent gets stuck or loops
 
-- The backend has built-in safety to prevent infinite loops
-- Check the output for warnings like:
-  ```
-  ⚠️ WARNING: Model tried to call final_answer with other tools
-  ```
-- This is automatically corrected by the backend
+- The backend has built-in safety to prevent infinite loops (max_steps=4)
+- Check output for validation warnings
+- The model automatically validates each tool call before proceeding
 
 ### Slow responses
 
-- First response is slow due to model loading (~2-5 seconds)
-- Subsequent responses are faster (~0.5-1 second)
+- First response is slow due to model loading (~2-3 seconds)
+- Subsequent responses are faster (~1-2 seconds)
 - Keep Ollama running in background for faster startup
 
 ## Security Considerations
 
-**Important:** This tool is designed for **local DevOps automation** on trusted VMs.
+**Important:** This tool is designed for **local DevOps automation** on trusted environments.
 
 - ⚠️ Uses `shell=True` for command execution (convenient but potentially unsafe)
 - ⚠️ No input sanitization or command whitelisting
@@ -242,15 +321,16 @@ For production use, consider:
 1. **User Input**: Query provided via CLI
 2. **SmolAgents**: Orchestrates the agent loop and tool calling
 3. **Ollama Backend**: Custom backend that formats prompts and parses tool calls
-4. **Tool Execution**: Agent executes tools (file ops, shell commands, etc.)
-5. **Result**: Final answer returned to user
+4. **Sequential Execution**: Model calls one tool, waits for response, then proceeds
+5. **Validation**: Each tool output is checked before next step
+6. **Result**: Final answer returned to user
 
 ### Key Features of the Backend
 
-- **Custom Prompt Engineering**: Strict instructions to prevent infinite loops
-- **Tool Call Parsing**: Regex-based parsing of `Tool:name({"args": "value"})` format
+- **Custom System Prompt**: Strict instructions to enforce one-tool-at-a-time execution
+- **Tool Call Parsing**: Regex-based parsing of XML `<tool_call>` format
 - **Safety Filter**: Automatically strips `final_answer` when combined with other tools
-- **System Context**: Includes OS, Python version, Docker availability in prompts
+- **Tool Response Formatting**: Explicit "The value is: ..." format for better value extraction
 
 ## Development
 
@@ -260,9 +340,9 @@ For production use, consider:
 ollama_devops/
 ├── agent.py              # Main CLI and agent definition
 ├── ollama_backend.py     # Custom Ollama backend for SmolAgents
-├── test_output.log       # Latest test run output
-├── Dockerfile            # Generated by agent (example)
-└── README.md            # This file
+├── Modelfile             # Ollama model configuration
+├── README.md             # This file
+└── tests/                # Test scripts
 ```
 
 ### Adding New Tools
@@ -284,7 +364,7 @@ def my_tool(arg: str) -> str:
 
 # Add to agent
 agent = DevOpsAgent(
-    tools=[read_file, write_file, run_command, get_env, my_tool],
+    tools=[read_file, write_file, bash, get_env, my_tool],
     model=model,
     instructions="..."
 )
@@ -299,18 +379,19 @@ SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "test query" 2>&1 | tee test_output.l
 
 ## Limitations
 
-- **Model Limitations**: Small 1.5B model may hallucinate or make mistakes
+- **Model Size**: 1.7B parameter model may make mistakes on complex tasks
 - **No Memory**: Each run is independent (no conversation history between runs)
 - **Local Only**: Requires Ollama running locally
-- **Single Query**: Processes one query at a time (no interactive mode)
+- **Single Query**: Processes one query at a time (no interactive mode yet)
+- **Max Steps**: Limited to 4 steps by default (configurable)
 
 ## Future Enhancements
 
 - [ ] Interactive mode (chat-like interface)
 - [ ] Conversation history management
-- [ ] Better error handling with try/catch blocks
+- [ ] Better error handling with retry logic
 - [ ] Command whitelisting for security
-- [ ] Support for larger models
+- [ ] Support for larger models (7B, 13B)
 - [ ] Web UI interface
 - [ ] Docker containerization
 
@@ -321,3 +402,16 @@ MIT License - Use at your own risk
 ## Contributing
 
 This is a local DevOps automation tool. Feel free to fork and customize for your needs.
+
+## Citation
+
+If you use this model or codebase, please cite:
+
+```
+@misc{qwen-devops-v2,
+  title={Qwen3-1.7B Fine-tuned for DevOps Automation},
+  author={ApInference},
+  year={2025},
+  url={https://github.com/yourusername/ollama_devops}
+}
+```
