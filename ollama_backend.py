@@ -227,9 +227,10 @@ class OllamaChat:
             "stream": False,
         }
 
-        # Debug: print what is sent
-        print("\n=== PAYLOAD SENT TO OLLAMA (trimmed) ===")
-        print(json.dumps(payload, indent=2) + "...\n")
+        # Debug: print what is sent (only if DEBUG env var is set)
+        if os.getenv('DEBUG_OLLAMA') == '1':
+            print("\n=== PAYLOAD SENT TO OLLAMA (trimmed) ===")
+            print(json.dumps(payload, indent=2) + "...\n")
 
         resp = requests.post(self.endpoint, json=payload, timeout=300)
         if not resp.ok:
@@ -237,8 +238,9 @@ class OllamaChat:
 
         data = resp.json()
 
-        print("\n🟩 === [RECV] Ollama Response ===")
-        print(json.dumps(data, indent=2, ensure_ascii=False))
+        if os.getenv('DEBUG_OLLAMA') == '1':
+            print("\n🟩 === [RECV] Ollama Response ===")
+            print(json.dumps(data, indent=2, ensure_ascii=False))
 
         # 4️⃣ Extract assistant content
         content = ""
@@ -288,7 +290,9 @@ class OllamaChat:
         calls = []
 
         # Try parsing XML <tool_call> tags first (QWEN's official format)
-        xml_matches = list(re.finditer(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", text, re.DOTALL))
+        # Extract everything between <tool_call> and </tool_call>, then parse as JSON
+        # Use greedy match (.*) instead of non-greedy (.*?) to capture full JSON with nested braces
+        xml_matches = list(re.finditer(r"<tool_call>\s*(.*)\s*</tool_call>", text, re.DOTALL))
 
         # ENFORCE: Exactly ONE tool call per response
         if len(xml_matches) > 1:
@@ -301,7 +305,8 @@ class OllamaChat:
         # Process the single tool call (or none)
         for match in xml_matches:
             try:
-                tool_data = json.loads(match.group(1))
+                # Strip whitespace from captured JSON to handle trailing newlines
+                tool_data = json.loads(match.group(1).strip())
                 name = tool_data.get("name", "unknown")
                 args = tool_data.get("arguments", {})
 
@@ -315,6 +320,7 @@ class OllamaChat:
                 calls.append(call)
             except json.JSONDecodeError as e:
                 print(f"⚠️  WARNING: Failed to parse tool call JSON: {e}")
+                print(f"📄 Malformed JSON was: {match.group(1)}")
                 continue
 
         # If no XML tags found, try markdown JSON blocks (QWEN small models often use this)
