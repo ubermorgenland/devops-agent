@@ -52,8 +52,13 @@ def _qwen_friendly_to_messages(self, summary_mode=False):
         # Format observation to be explicit about value usage
         observation_text = self.observations.strip()
 
-        # Simpler, clearer format for small models
-        formatted_observation = f"The value is: {observation_text}"
+        # Handle empty responses explicitly to prevent hallucination
+        # BUT: Skip this for final_answer, which is supposed to return nothing
+        if tool_name != "final_answer" and (not observation_text or observation_text == ""):
+            formatted_observation = "Command executed successfully but returned no output. This likely means no results were found or nothing is configured. Try an alternative command or report this accurately."
+        else:
+            # Simpler, clearer format for small models
+            formatted_observation = f"The value is: {observation_text}"
 
         messages.append(
             ChatMessage(
@@ -162,7 +167,7 @@ agent = DevOpsAgent(
     tools=[read_file, write_file, bash, get_env],
     model=model,
     instructions="You are a DevOps automation assistant; use the tools provided and call no other code.",
-    max_steps=4  # Prevent infinite loops - stop after 10 steps
+    max_steps=15  # Allow more steps for error recovery and debugging
 )
 
 
