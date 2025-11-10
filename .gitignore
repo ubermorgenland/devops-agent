@@ -32,3 +32,6 @@ test_dual_format.log
 # Docker build artifacts
 Dockerfile
 .dockerignore
+
+# Fine-tuning artifacts
+devops_finetuning_outputs_sft_model/

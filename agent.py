@@ -147,8 +147,8 @@ def get_env(key: str) -> str:
         return f"ERROR: Environment variable '{key}' is not set"
     return value
 
-# Model backend
-model = OllamaChat(model="qwen3:1.7b")
+# Model backend - using merged model (LoRA weights merged into base model for faster inference)
+model = OllamaChat(model="qwen-devops-v2") #devops-merged (LoRA merged) vs devops-sft (LoRA separate)
 
 
 
