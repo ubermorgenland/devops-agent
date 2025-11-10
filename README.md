@@ -246,8 +246,8 @@ SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "Your query here"
 
 ## Performance
 
-- **First response**: ~2-3 seconds (model loading)
-- **Subsequent responses**: ~1-2 seconds per tool call
+- **First response**: ~up to 30 seconds (model loading)
+- **Subsequent responses**: ~3-4 seconds per tool call
 - **Multi-step tasks**: ~10 seconds total for 2-3 step workflows
 - **Memory usage**: ~1.5GB RAM for model + inference
 
