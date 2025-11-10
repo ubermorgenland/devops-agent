@@ -42,11 +42,20 @@ Step 2: Provide summary
 
 ### 1. Prerequisites
 
-```bash
-# Install Ollama (if not already installed)
-curl -fsSL https://ollama.com/install.sh | sh
+**Install Ollama:**
 
-# Install Python dependencies
+```bash
+# macOS: Download from website or use Homebrew
+brew install ollama
+# OR download from: https://ollama.com/download
+
+# Linux:
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**Install Python dependencies:**
+
+```bash
 pip install smolagents requests
 ```
 
