@@ -306,7 +306,19 @@ class OllamaChat:
         for match in xml_matches:
             try:
                 # Strip whitespace from captured JSON to handle trailing newlines
-                tool_data = json.loads(match.group(1).strip())
+                json_str = match.group(1).strip()
+
+                # AUTO-FIX: Add missing closing brace if needed
+                # Model sometimes generates incomplete JSON missing the final }
+                open_braces = json_str.count('{')
+                close_braces = json_str.count('}')
+                if open_braces > close_braces:
+                    missing = open_braces - close_braces
+                    json_str += '}' * missing
+                    if os.getenv('DEBUG_OLLAMA') == '1':
+                        print(f"🔧 Auto-fixed JSON by adding {missing} closing brace(s)")
+
+                tool_data = json.loads(json_str)
                 name = tool_data.get("name", "unknown")
                 args = tool_data.get("arguments", {})
 
@@ -319,8 +331,9 @@ class OllamaChat:
 
                 calls.append(call)
             except json.JSONDecodeError as e:
-                print(f"⚠️  WARNING: Failed to parse tool call JSON: {e}")
-                print(f"📄 Malformed JSON was: {match.group(1)}")
+                print(f"❌ ERROR: Failed to parse tool call JSON even after auto-fix attempt: {e}")
+                print(f"📄 Original JSON was: {match.group(1).strip()}")
+                print(f"📄 After auto-fix: {json_str}")
                 continue
 
         # If no XML tags found, try markdown JSON blocks (QWEN small models often use this)
