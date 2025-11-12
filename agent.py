@@ -208,11 +208,69 @@ class DevOpsAgent(ToolCallingAgent):
             "computing", "deliberating", "reasoning", "calculating", "inferring",
             "discombulating", "cogitating", "ruminating"
         ]
+        # Track last tool call to detect repetition
+        self.last_tool_call = None
 
     def _run_model(self, messages, stop_sequences=None):
         # Always forward self.tools to the model
         result = self.model.generate(messages, tools=self.tools, stop_sequences=stop_sequences)
         return result
+
+    def execute_tool_call(self, tool_name: str, arguments: dict):
+        """
+        Override tool execution to prevent hallucinated final_answer calls.
+        Check if final_answer is called without any prior tool executions.
+        Also detect if the model is repeating the same tool call.
+        """
+        # Create a signature for this tool call (tool name + arguments)
+        import json
+        current_call_signature = json.dumps({"tool": tool_name, "args": arguments}, sort_keys=True)
+
+        # Check for repetition (calling the same tool with same parameters twice in a row)
+        if self.last_tool_call == current_call_signature and tool_name != "final_answer":
+            raise ValueError(
+                f"REPETITION DETECTED: You just called '{tool_name}' with the exact same parameters. "
+                f"You already received the result from this command. Do not repeat the same tool call! "
+                f"If you have the data you need, call final_answer with your conclusion. "
+                f"If you need different data, call a different tool or use different parameters."
+            )
+
+        # Update last tool call (but not for final_answer, as it doesn't produce data)
+        if tool_name != "final_answer":
+            self.last_tool_call = current_call_signature
+
+        # Check if this is a final_answer call without prior tool executions
+        if tool_name == "final_answer":
+            # Count how many actual tool calls (non-final_answer) have been executed
+            actual_tool_calls = 0
+            if hasattr(self, 'memory') and self.memory:
+                # Access steps from AgentMemory
+                steps = getattr(self.memory, 'steps', [])
+                for step in steps:
+                    if hasattr(step, 'tool_calls') and step.tool_calls:
+                        for tool_call in step.tool_calls:
+                            # Get tool name from the tool call
+                            if hasattr(tool_call, 'name'):
+                                call_name = tool_call.name
+                            elif hasattr(tool_call, 'function') and hasattr(tool_call.function, 'name'):
+                                call_name = tool_call.function.name
+                            else:
+                                continue
+
+                            # Count non-final_answer tools
+                            if call_name != "final_answer":
+                                actual_tool_calls += 1
+
+            # If no actual tools were called, reject the final_answer
+            if actual_tool_calls == 0:
+                raise ValueError(
+                    "HALLUCINATION ALERT: You called final_answer without executing any tools! "
+                    "You must actually run commands (bash, read_file, write_file, get_env) before providing a final answer. "
+                    "Please execute the appropriate tools first to gather real data, then call final_answer with the actual results."
+                )
+
+        # Call the parent's execute_tool_call method
+        return super().execute_tool_call(tool_name, arguments)
 
 
 agent = DevOpsAgent(
