@@ -4,133 +4,8 @@ from ollama_backend import OllamaChat
 import os
 import subprocess
 
-# ─────────────────────────────────────────────
-# 1️⃣ Monkey-patch SmolAgents' default system message
-# ─────────────────────────────────────────────
-def _minimal_system_message(self):
-    return ""  # Disable SmolAgents' long default prompt entirely
-
-ToolCallingAgent._make_system_message = _minimal_system_message
-
-# ─────────────────────────────────────────────
-# 2️⃣ Monkey-patch ActionStep.to_messages() for QWEN-friendly tool response formatting
-# ─────────────────────────────────────────────
-from smolagents.memory import ActionStep
-
-# Store original method
-_original_to_messages = ActionStep.to_messages
-
-def _qwen_friendly_to_messages(self, summary_mode=False):
-    """
-    Override tool response formatting to be more explicit for small models.
-    Instead of generic 'Observation: value', format as:
-    'Tool <tool_name> returned: <value>. Use this value in your next steps.'
-    """
-    messages = []
-
-    # Add model output message (assistant's tool call response)
-    if self.model_output_message:
-        messages.append(self.model_output_message)
-    elif self.model_output:
-        # Handle cases where model_output is a string
-        content = self.model_output if isinstance(self.model_output, str) else str(self.model_output)
-        messages.append(
-            ChatMessage(
-                role=MessageRole.ASSISTANT,
-                content=content.strip(),
-            )
-        )
-
-    # Add tool response with explicit formatting for QWEN
-    if self.observations is not None:
-        # Parse which tool was called to make response more explicit
-        tool_name = "unknown_tool"
-        if self.tool_calls and len(self.tool_calls) > 0:
-            # ToolCall has 'name' directly, not 'function.name'
-            tool_name = self.tool_calls[0].name
-
-        # Format observation to be explicit about value usage
-        observation_text = self.observations.strip()
-
-        # Handle empty responses explicitly to prevent hallucination
-        # BUT: Skip this for final_answer, which is supposed to return nothing
-        if tool_name != "final_answer" and (not observation_text or observation_text == ""):
-            formatted_observation = "Command executed successfully but returned no output. This likely means no results were found or nothing is configured. Try an alternative command or report this accurately."
-        else:
-            # Simpler, clearer format for small models
-            formatted_observation = f"The value is: {observation_text}"
-
-        messages.append(
-            ChatMessage(
-                role=MessageRole.TOOL_RESPONSE,
-                content=[
-                    {
-                        "type": "text",
-                        "text": formatted_observation,
-                    }
-                ],
-            )
-        )
-
-    # Add error message if present
-    if self.error is not None:
-        error_message = (
-            "Error:\n"
-            + str(self.error)
-            + "\nNow let's retry: take care not to repeat previous errors!"
-        )
-        message_content = f"Call id: {self.tool_calls[0].id}\n" if self.tool_calls else ""
-        message_content += error_message
-        messages.append(
-            ChatMessage(role=MessageRole.TOOL_RESPONSE, content=[{"type": "text", "text": message_content}])
-        )
-
-    return messages
-
-# Apply the patch
-ActionStep.to_messages = _qwen_friendly_to_messages
-
-# ─────────────────────────────────────────────
-# 3️⃣ Monkey-patch SmolAgents logger for compact tool call display
-# ─────────────────────────────────────────────
-from smolagents import AgentLogger
-from rich.panel import Panel
-from rich.text import Text
-import re
-
-_original_log = AgentLogger.log
-
-def _compact_log(self, message, level=None, **kwargs):
-    """Reformat tool call messages to be more compact"""
-    if isinstance(message, Panel) and hasattr(message, 'renderable'):
-        text_str = str(message.renderable)
-
-        # Format: "Calling tool: 'bash' with arguments: {'command': 'X'}" -> "bash {X}"
-        # Use DOTALL to match across newlines for long argument values
-        match = re.search(r"Calling tool: '(\w+)' with arguments: \{[^:]+: '(.+?)'\}", text_str, re.DOTALL)
-        if match:
-            tool_name = match.group(1)
-            arg_value = match.group(2)
-            # For final_answer, just show the answer
-            if tool_name == "final_answer":
-                message = Panel(Text(arg_value))
-            else:
-                message = Panel(Text(f"{tool_name} {{{arg_value}}}"))
-        else:
-            # Try with double quotes (for arguments with quotes or special chars)
-            match = re.search(r'Calling tool: \'(\w+)\' with arguments: \{[^:]+: "(.+?)"\}', text_str, re.DOTALL)
-            if match:
-                tool_name = match.group(1)
-                arg_value = match.group(2)
-                # For final_answer, just show the answer
-                if tool_name == "final_answer":
-                    message = Panel(Text(arg_value))
-                else:
-                    message = Panel(Text(f"{tool_name} {{{arg_value}}}"))
-
-    return _original_log(self, message, level, **kwargs)
-
-AgentLogger.log = _compact_log
+# Apply SmolAgents monkey patches for clean real-time output
+import smolagents_patches
 
 # Define tools using decorator
 @tool
@@ -288,90 +163,65 @@ model.tools = agent.tools
 if __name__ == "__main__":
     import sys
 
-    # Check for verbose flag
+    # Check for verbose and interactive flags
     verbose = '--verbose' in sys.argv or '-v' in sys.argv or os.getenv('VERBOSE') == '1'
-    args = [arg for arg in sys.argv[1:] if arg not in ('--verbose', '-v')]
+    interactive = '--interactive' in sys.argv or '-i' in sys.argv
+    args = [arg for arg in sys.argv[1:] if arg not in ('--verbose', '-v', '--interactive', '-i')]
 
     # Set debug mode
     if not verbose:
         os.environ['DEBUG_OLLAMA'] = '0'
         os.environ['SMOLAGENTS_LOG_LEVEL'] = 'WARNING'  # Suppress debug output
 
-    # Check if query provided as argument
-    if len(args) > 0:
-        query = " ".join(args)
-    else:
-        # Default query if none provided
-        query = "Get all pods in default namespace"
-        print(f"ℹ️  No query provided. Using default query.")
-        print(f"   Usage: python agent.py \"<your query here>\" [--verbose]\n")
+    # Interactive mode
+    if interactive or len(args) == 0:
+        print("🤖 DevOps Agent - Interactive Mode")
+        print("Type your task and press Enter. Type 'exit' or 'quit' to leave.\n")
+
+        while True:
+            try:
+                # Prompt for input
+                query = input("\n> ").strip()
+
+                # Check for exit commands
+                if query.lower() in ['exit', 'quit', 'q']:
+                    print("\nGoodbye!")
+                    break
+
+                # Skip empty input
+                if not query:
+                    continue
+
+                # Check for help command
+                if query.lower() in ['help', '?']:
+                    print("\nAvailable commands:")
+                    print("  - Type any DevOps task (e.g., 'Get all pods')")
+                    print("  - 'exit' or 'quit' - Exit interactive mode")
+                    print("  - 'help' - Show this message")
+                    continue
+
+                # Reset agent state for clean execution
+                agent.last_tool_call = None
+
+                # Execute the task - real-time filtering handled by smolagents_patches
+                print()  # Blank line before output
+                result = agent.run(query)
+                print(f"\n✅ {result}")
+
+            except KeyboardInterrupt:
+                print("\n\nInterrupted. Type 'exit' to quit.")
+                continue
+            except Exception as e:
+                print(f"\n❌ Error: {e}")
+                continue
+
+        sys.exit(0)
+
+    # Single command mode
+    query = " ".join(args)
 
     print(f"📋 Task: {query}\n")
 
-    # Filter out Step headers if not verbose
-    if not verbose:
-        import io, sys, re
-        from contextlib import redirect_stdout
-
-        # Capture stdout only (stderr shows thinking indicators)
-        captured = io.StringIO()
-        with redirect_stdout(captured):
-            result = agent.run(query)
-
-        # Filter and print
-        output = captured.getvalue()
-        lines = output.split('\n')
-        in_model_output = False
-
-        for i, line in enumerate(lines):
-            # Track when we're inside model output sections
-            if 'Output message of the LLM:' in line:
-                in_model_output = True
-                continue
-            if line.strip().startswith('╭') and in_model_output:
-                in_model_output = False
-
-            # Skip model output, debug lines, and XML tags
-            stripped = line.strip()
-            if (in_model_output or
-                re.match(r'^.*Step \d+.*$', line) or
-                re.match(r'^\[Step \d+:.*\]$', line) or
-                re.match(r'^[12]$', line) or
-                re.match(r'^\s*"(name|arguments|command|answer|id|function)":', line) or  # JSON keys with whitespace
-                re.match(r'^\s*[{}]\s*$', line) or  # Standalone braces
-                '"name":' in stripped or
-                '"arguments":' in stripped or
-                '"command":' in stripped or
-                '"answer":' in stripped):
-                continue
-
-            # Skip "Final answer:" lines (they duplicate the result at the end)
-            if 'Final answer:' in line:
-                continue
-
-            # Remove trailing " 1" from lines FIRST (before duplicate checking)
-            line = re.sub(r'\s+1$', '', line)
-
-            # Skip if this line is a duplicate of the result (final answer observations)
-            if line.strip() and len(line.strip()) > 20 and line.strip() in str(result):
-                continue
-
-            # Fix "Observations:" formatting - add newline after it if there's text on the same line
-            if line.startswith('Observations: ') and len(line) > 14:
-                # There's text after "Observations: " - split it
-                print('Observations:')
-                print(line[14:])  # Print the rest on next line
-                continue
-
-            # Skip standalone "Observations:" if it's near the end (likely final answer)
-            if line.strip() == 'Observations:':
-                remaining = len(lines) - i
-                if remaining < 5:  # Near the end, likely final answer
-                    continue
-
-            print(line)
-
-        print(f"\n✅ Result:\n{result}\n")
-    else:
-        result = agent.run(query)
-        print(f"\n✅ Result:\n{result}\n")
+    # Real-time filtering handled by smolagents_patches
+    result = agent.run(query)
+    print(f"\n✅ Result:\n{result}\n")

@@ -99,12 +99,71 @@ ollama create qwen-devops-v2 -f Modelfile
 
 ### 4. Run the Agent
 
+**Single query mode:**
 ```bash
-# Run with a query
 python agent.py "Get all pods in default namespace"
+```
 
-# Or use default query
+**Interactive mode (REPL):**
+```bash
 python agent.py
+# OR
+python agent.py --interactive
+```
+
+**Verbose mode (show detailed execution):**
+```bash
+python agent.py "Your query" --verbose
+```
+
+## Interactive Mode
+
+The agent supports an interactive REPL (Read-Eval-Print Loop) for continuous task execution:
+
+```bash
+python agent.py
+```
+
+**Features:**
+- Execute multiple tasks in one session
+- Real-time thinking indicator with timer
+- Clean output showing only tool calls and observations
+- Type `exit`, `quit`, or `q` to leave
+- Type `help` or `?` for available commands
+
+**Example session:**
+```
+🤖 DevOps Agent - Interactive Mode
+Type your task and press Enter. Type 'exit' or 'quit' to leave.
+
+> Get all pods in default namespace
+⠋ thinking... 3s
+⏱️ 6s
+
+bash {kubectl get pods -n default}
+Observations:
+NAME                          READY   STATUS    RESTARTS   AGE
+nginx-deployment-abc123       1/1     Running   0          2d
+
+✅ Successfully retrieved all pods in the default namespace...
+
+> Create a simple Dockerfile for Python app
+⠋ thinking... 2s
+⏱️ 4s
+
+write_file {Dockerfile}
+Observations:
+Wrote 156 bytes to Dockerfile
+
+✅ Created Dockerfile for Python application...
+
+> exit
+Goodbye!
+```
+
+**Verbose mode:**
+```bash
+python agent.py --verbose  # Show detailed execution steps
 ```
 
 ## Usage Examples
@@ -432,20 +491,20 @@ SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "test query" 2>&1 | tee test_output.l
   - General system administration
   - Database operations
 - **Model Size**: 1.7B parameter model may make mistakes on complex tasks
-- **No Memory**: Each run is independent (no conversation history between runs)
+- **No Memory Between Queries**: Each query in interactive mode is independent (no conversation history)
 - **Local Only**: Requires Ollama running locally
-- **Single Query**: Processes one query at a time (no interactive mode yet)
 - **Max Steps**: Limited to 15 steps by default (configurable)
 
 ## Future Enhancements
 
-- [ ] Interactive mode (chat-like interface)
-- [ ] Conversation history management
+- [x] Interactive mode (REPL with clean output)
+- [ ] Conversation history management (multi-turn context)
 - [ ] Better error handling with retry logic
 - [ ] Command whitelisting for security
 - [ ] Support for larger models (7B, 13B)
 - [ ] Web UI interface
 - [ ] Docker containerization
+- [ ] KV cache optimization for faster responses
 
 ## License
 
