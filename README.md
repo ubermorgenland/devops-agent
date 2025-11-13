@@ -67,8 +67,10 @@ curl -fsSL https://ollama.com/install.sh | sh
 **Install Python dependencies:**
 
 ```bash
-pip install smolagents requests
+pip install smolagents requests prompt_toolkit
 ```
+
+**Note**: `prompt_toolkit` is required for interactive mode with arrow key support and command history.
 
 ### 2. Download the Model
 
@@ -146,6 +148,8 @@ python agent.py
 - Execute multiple tasks in one session
 - Real-time thinking indicator with timer
 - Clean output showing only tool calls and observations
+- **Arrow key support**: Use Up/Down to navigate command history, Left/Right to edit current line
+- **Persistent command history**: Commands are saved to `~/.devops_agent_history`
 - Optional approval mode for safety (confirm before executing tools)
 - Type `exit`, `quit`, or `q` to leave
 - Type `help` or `?` for available commands
