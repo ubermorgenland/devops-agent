@@ -1,4 +1,4 @@
-FROM ./qwen-devops-442-q4_k_m.gguf
+FROM ./qwen3-devops.gguf
 
 TEMPLATE """{{- if .System }}
 <|im_start|>system
