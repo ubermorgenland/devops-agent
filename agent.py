@@ -3,6 +3,8 @@ from smolagents.models import ChatMessage, MessageRole
 from ollama_backend import OllamaChat
 import os
 import subprocess
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
 
 # Apply SmolAgents monkey patches for clean real-time output
 import smolagents_patches
@@ -259,6 +261,12 @@ if __name__ == "__main__":
 
     # Interactive mode
     if interactive or len(args) == 0:
+        # Set up prompt_toolkit for command history and arrow key support
+        history_file = os.path.expanduser("~/.devops_agent_history")
+
+        # Create a prompt session with history
+        session = PromptSession(history=FileHistory(history_file))
+
         print("🤖 DevOps Agent - Interactive Mode")
         if require_approval:
             print("⚠️  Approval mode enabled - you'll be asked to approve each tool call")
@@ -266,8 +274,8 @@ if __name__ == "__main__":
 
         while True:
             try:
-                # Prompt for input
-                query = input("\n> ").strip()
+                # Prompt for input with arrow key support and history
+                query = session.prompt("\n> ").strip()
 
                 # Check for exit commands
                 if query.lower() in ['exit', 'quit', 'q']:
