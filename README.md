@@ -51,7 +51,24 @@ Step 2: Provide summary
 
 ## Quick Start
 
-### 1. Prerequisites
+### One-Line Installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ubermorgenland/devops-agent/main/install.sh | bash
+```
+
+This will automatically:
+- Install Ollama (if not present)
+- Install Python dependencies
+- Download the model from Hugging Face
+- Create the Ollama model
+- Set up the `devops-agent` CLI command
+
+---
+
+### Manual Installation
+
+#### 1. Prerequisites
 
 **Install Ollama:**
 
@@ -70,7 +87,7 @@ curl -fsSL https://ollama.com/install.sh | sh
 pip install smolagents requests
 ```
 
-### 2. Download the Model
+#### 2. Download the Model
 
 Download the fine-tuned GGUF model (1GB) from Hugging Face:
 
@@ -86,46 +103,46 @@ Or download manually from: https://huggingface.co/ubermorgen/qwen3-devops
 
 **Note**: Make sure the GGUF file is in the same directory as the `Modelfile`.
 
-### 3. Create Ollama Model
+#### 3. Create Ollama Model
 
 ```bash
-ollama create qwen-devops-v2 -f Modelfile
+ollama create qwen3-devops -f Modelfile
 ```
 
-### 4. Run the Agent
+#### 4. Run the Agent
 
 **Single query mode:**
 ```bash
-python agent.py "Get all pods in default namespace"
+devops-agent "Get all pods in default namespace"
 ```
 
 **Interactive mode (REPL):**
 ```bash
-python agent.py
+devops-agent
 # OR
-python agent.py --interactive
+devops-agent --interactive
 ```
 
 **Verbose mode (show detailed execution):**
 ```bash
-python agent.py "Your query" --verbose
+devops-agent "Your query" --verbose
 ```
 
 **Approval mode (require confirmation before executing tools):**
 ```bash
 # Interactive mode with approval
-python agent.py --require-approval
+devops-agent --require-approval
 # OR use shorthand
-python agent.py -a
+devops-agent -a
 
 # Combine with interactive mode
-python agent.py -i -a
+devops-agent -i -a
 
 # Single query with approval
-python agent.py --require-approval "List all Docker containers"
+devops-agent --require-approval "List all Docker containers"
 
 # Using environment variable
-REQUIRE_APPROVAL=1 python agent.py
+REQUIRE_APPROVAL=1 devops-agent
 ```
 
 ## Interactive Mode
@@ -133,7 +150,7 @@ REQUIRE_APPROVAL=1 python agent.py
 The agent supports an interactive REPL (Read-Eval-Print Loop) for continuous task execution:
 
 ```bash
-python agent.py
+devops-agent
 ```
 
 **Features:**
@@ -176,12 +193,12 @@ Goodbye!
 
 **Verbose mode:**
 ```bash
-python agent.py --verbose  # Show detailed execution steps
+devops-agent --verbose  # Show detailed execution steps
 ```
 
 **Approval mode (with example):**
 ```
-$ python agent.py -i -a
+$ devops-agent -i -a
 
 🤖 DevOps Agent - Interactive Mode
 ⚠️  Approval mode enabled - you'll be asked to approve each tool call
@@ -250,74 +267,74 @@ Observations:
 
 ```bash
 # Build and manage images
-python agent.py "Build Docker image for Node.js application"
+devops-agent "Build Docker image for Node.js application"
 
 # Container management
-python agent.py "Run Docker container with environment variables"
+devops-agent "Run Docker container with environment variables"
 
 # Docker Compose
-python agent.py "Setup Docker Compose for local development"
+devops-agent "Setup Docker Compose for local development"
 
 # Optimization
-python agent.py "Optimize Docker image to reduce size"
+devops-agent "Optimize Docker image to reduce size"
 
 # Debugging
-python agent.py "Debug Docker container networking issues"
+devops-agent "Debug Docker container networking issues"
 ```
 
 ### Kubernetes Operations (Primary Strength)
 
 ```bash
 # List pods
-python agent.py "Get all pods in default namespace"
+devops-agent "Get all pods in default namespace"
 
 # Deployments
-python agent.py "Scale Kubernetes deployment manually"
+devops-agent "Scale Kubernetes deployment manually"
 
 # Services
-python agent.py "Expose Kubernetes deployment with service"
+devops-agent "Expose Kubernetes deployment with service"
 
 # Configuration
-python agent.py "Configure liveness probe for Kubernetes pod"
+devops-agent "Configure liveness probe for Kubernetes pod"
 
 # Environment
-python agent.py "Configure environment variables in Kubernetes pod"
+devops-agent "Configure environment variables in Kubernetes pod"
 ```
 
 ### File Operations
 
 ```bash
 # Read a file
-python agent.py "Read the contents of /etc/hosts"
+devops-agent "Read the contents of /etc/hosts"
 
 # Write a file
-python agent.py "Create a Dockerfile that prints Hello World"
+devops-agent "Create a Dockerfile that prints Hello World"
 
 # List files
-python agent.py "List all .py files in the current directory"
+devops-agent "List all .py files in the current directory"
 ```
 
 ### System Operations
 
 ```bash
 # Check system resources
-python agent.py "Check disk usage and available memory"
+devops-agent "Check disk usage and available memory"
 
 # Environment variables
-python agent.py "Get the value of PATH environment variable"
+devops-agent "Get the value of PATH environment variable"
 
 # Run commands
-python agent.py "Show running Docker containers"
+devops-agent "Show running Docker containers"
 ```
 
 ### Complex Multi-Step Tasks
 
 ```bash
 # Build and validate
-python agent.py "Create a Dockerfile, then check if it exists"
+devops-agent "Create a Dockerfile, then check if it exists"
 
 # Deploy workflow
-python agent.py "Get DOCKER_USER from environment and create a Dockerfile using it"
+devops-agent "Get DOCKER_USER from environment and create a Dockerfile using it"
 ```
 
 ## Available Tools
@@ -370,7 +387,7 @@ The agent has access to these tools:
          │
          ▼
 ┌─────────────────┐
-│ Ollama (Local)  │  qwen-devops-v2 model
+│ Ollama (Local)  │  qwen3-devops model
 └─────────────────┘
 ```
 
@@ -381,7 +398,7 @@ The agent has access to these tools:
 Edit `agent.py` line 151:
 
 ```python
-model = OllamaChat(model="qwen-devops-v2")
+model = OllamaChat(model="qwen3-devops")
 ```
 
 ### Change Ollama Endpoint
@@ -390,7 +407,7 @@ Edit `agent.py` line 151:
 
 ```python
 model = OllamaChat(
-    model="qwen-devops-v2",
+    model="qwen3-devops",
     endpoint="http://your-server:11434/api/chat"
 )
 ```
@@ -405,12 +422,12 @@ PARAMETER top_p 0.9          # Sampling threshold
 PARAMETER num_predict 512    # Max tokens per response
 ```
 
-Then recreate: `ollama create qwen-devops-v2 -f Modelfile`
+Then recreate: `ollama create qwen3-devops -f Modelfile`
 
 ### Enable Debug Logging
 
 ```bash
-SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "Your query here"
+SMOLAGENTS_LOG_LEVEL=DEBUG devops-agent "Your query here"
 ```
 
 ## Performance
@@ -424,7 +441,7 @@ SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "Your query here"
 
 1. **Keep Ollama running**: Pre-load model to avoid startup delay
    ```bash
-   ollama run qwen-devops-v2 "hello"
+   ollama run qwen3-devops "hello"
    ```
 
 2. **Reduce temperature**: For more deterministic outputs, lower temperature to 0.3-0.5
@@ -450,7 +467,7 @@ ollama serve
 ollama list
 
 # If missing, recreate the model
-ollama create qwen-devops-v2 -f Modelfile
+ollama create qwen3-devops -f Modelfile
 ```
 
 ### Error: "No such file: qwen3-devops.gguf"
@@ -574,7 +591,7 @@ agent = DevOpsAgent(
 
 ```bash
 # Run with debug logging and save output
-SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "test query" 2>&1 | tee test_output.log
+SMOLAGENTS_LOG_LEVEL=DEBUG devops-agent "test query" 2>&1 | tee test_output.log
 ```
 
 ## Limitations
@@ -621,7 +638,7 @@ This is a local DevOps automation tool. Feel free to fork and customize for your
 If you use this model or codebase, please cite:
 
 ```
-@misc{qwen-devops-v2,
+@misc{qwen3-devops,
   title={Qwen3-1.7B Fine-tuned for DevOps Automation},
   author={ApInference},
   year={2025},

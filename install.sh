@@ -133,11 +133,11 @@ fi
 
 # Create Ollama model
 print_info "Creating Ollama model..."
-if ! ollama list | grep -q "qwen-devops-v2"; then
-    ollama create qwen-devops-v2 -f Modelfile
-    print_success "Ollama model created: qwen-devops-v2"
+if ! ollama list | grep -q "qwen3-devops"; then
+    ollama create qwen3-devops -f Modelfile
+    print_success "Ollama model created: qwen3-devops"
 else
-    print_success "Ollama model already exists: qwen-devops-v2"
+    print_success "Ollama model already exists: qwen3-devops"
 fi
 
 # Verify installation
@@ -149,11 +149,28 @@ else
     exit 1
 fi
 
-if ollama list | grep -q "qwen-devops-v2"; then
+if ollama list | grep -q "qwen3-devops"; then
     print_success "Ollama model is ready"
 else
     print_error "Ollama model verification failed"
     exit 1
+fi
+
+# Setup CLI wrapper
+print_info "Setting up CLI command..."
+chmod +x devops-agent
+
+# Try to symlink to user's local bin (no sudo required)
+if [ -d "$HOME/.local/bin" ]; then
+    ln -sf "$(pwd)/devops-agent" "$HOME/.local/bin/devops-agent"
+    print_success "CLI command installed: devops-agent (in ~/.local/bin)"
+    print_info "Make sure ~/.local/bin is in your PATH"
+elif [ -w "/usr/local/bin" ]; then
+    ln -sf "$(pwd)/devops-agent" "/usr/local/bin/devops-agent"
+    print_success "CLI command installed: devops-agent (in /usr/local/bin)"
+else
+    print_info "Could not install to PATH automatically"
+    print_info "You can run: ./devops-agent or add to PATH manually"
 fi
 
 echo ""
@@ -162,10 +179,10 @@ echo "║   Installation Complete!                                 ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "To get started:"
-echo "  • Interactive mode:  python3 agent.py"
-echo "  • Single query:      python3 agent.py \"Your query here\""
-echo "  • With approval:     python3 agent.py -a"
-echo "  • Verbose mode:      python3 agent.py --verbose"
+echo "  • Interactive mode:  devops-agent"
+echo "  • Single query:      devops-agent \"Your query here\""
+echo "  • With approval:     devops-agent -a"
+echo "  • Verbose mode:      devops-agent --verbose"
 echo ""
-echo "Documentation: https://github.com/ubermorgen/ollama-devops"
+echo "Documentation: https://github.com/ubermorgenland/devops-agent"
 echo ""

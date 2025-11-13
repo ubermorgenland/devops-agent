@@ -70,7 +70,7 @@ def get_env(key: str) -> str:
     return value
 
 # Model backend - using merged model (LoRA weights merged into base model for faster inference)
-model = OllamaChat(model="qwen-devops-v2") #devops-merged (LoRA merged) vs devops-sft (LoRA separate)
+model = OllamaChat(model="qwen3-devops")
 
 
 
