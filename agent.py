@@ -85,6 +85,37 @@ class DevOpsAgent(ToolCallingAgent):
         ]
         # Track last tool call to detect repetition
         self.last_tool_call = None
+        # Enable/disable tool approval prompts
+        self.require_approval = os.getenv('REQUIRE_APPROVAL') == '1'
+
+    def ask_user_approval(self, tool_name: str, arguments: dict):
+        """
+        Ask user for approval before executing a tool.
+        Returns (approved: bool, comment: str)
+        """
+        import json
+
+        # Format arguments nicely
+        args_str = json.dumps(arguments, indent=2)
+
+        print(f"\n🔧 Tool call requested:")
+        print(f"   Tool: {tool_name}")
+        print(f"   Arguments: {args_str}")
+        print()
+
+        # Ask for approval
+        while True:
+            response = input("Approve this tool call? [y/n]: ").strip().lower()
+
+            if response in ['y', 'yes']:
+                return True, ""
+            elif response in ['n', 'no']:
+                # Ask for optional comment
+                comment = input("Optional feedback for the agent (press Enter to skip): ").strip()
+                return False, comment
+            else:
+                print("Please answer 'y' or 'n'")
+                continue
 
     def _run_model(self, messages, stop_sequences=None):
         # Always forward self.tools to the model
@@ -96,7 +127,57 @@ class DevOpsAgent(ToolCallingAgent):
         Override tool execution to prevent hallucinated final_answer calls.
         Check if final_answer is called without any prior tool executions.
         Also detect if the model is repeating the same tool call.
+        Optionally ask for user approval before executing tools.
         """
+        # Ask for user approval if enabled (skip for final_answer)
+        if self.require_approval and tool_name != "final_answer":
+            approved, comment = self.ask_user_approval(tool_name, arguments)
+
+            if not approved:
+                # User rejected - create a rejection message for the LLM
+                rejection_message = "User rejected this tool call."
+                if comment:
+                    rejection_message += f" User comment: {comment}"
+
+                # Instead of raising an error, we'll temporarily replace the tool
+                # with one that just returns the rejection message
+                # This keeps the agent in its thinking loop
+                original_tool = None
+                tool_obj = None
+
+                # Find the tool in self.tools
+                if isinstance(self.tools, dict):
+                    tool_obj = self.tools.get(tool_name)
+                else:
+                    for t in self.tools:
+                        if getattr(t, 'name', getattr(t, '__name__', None)) == tool_name:
+                            tool_obj = t
+                            break
+
+                if tool_obj:
+                    # Save original forward function
+                    original_forward = getattr(tool_obj, 'forward', None)
+
+                    # Create a lambda that returns rejection message
+                    def rejection_func(*args, **kwargs):
+                        return rejection_message
+
+                    # Temporarily replace the tool's forward method
+                    tool_obj.forward = rejection_func
+
+                    try:
+                        # Execute with the fake tool
+                        result = super().execute_tool_call(tool_name, arguments)
+                    finally:
+                        # Restore original function
+                        if original_forward:
+                            tool_obj.forward = original_forward
+
+                    return result
+                else:
+                    # If we can't find the tool, raise error as fallback
+                    raise ValueError(rejection_message)
+
         # Create a signature for this tool call (tool name + arguments)
         import json
         current_call_signature = json.dumps({"tool": tool_name, "args": arguments}, sort_keys=True)
@@ -148,34 +229,39 @@ class DevOpsAgent(ToolCallingAgent):
         return super().execute_tool_call(tool_name, arguments)
 
 
-agent = DevOpsAgent(
-    tools=[read_file, write_file, bash, get_env],
-    model=model,
-    instructions="You are a DevOps automation assistant; use the tools provided and call no other code.",
-    max_steps=15  # Allow more steps for error recovery and debugging
-)
-
-
-
-model.tools = agent.tools
-
 # CLI argument support
 if __name__ == "__main__":
     import sys
 
-    # Check for verbose and interactive flags
+    # Check for verbose, interactive, and approval flags
     verbose = '--verbose' in sys.argv or '-v' in sys.argv or os.getenv('VERBOSE') == '1'
     interactive = '--interactive' in sys.argv or '-i' in sys.argv
-    args = [arg for arg in sys.argv[1:] if arg not in ('--verbose', '-v', '--interactive', '-i')]
+    require_approval = '--require-approval' in sys.argv or '-a' in sys.argv or os.getenv('REQUIRE_APPROVAL') == '1'
+    args = [arg for arg in sys.argv[1:] if arg not in ('--verbose', '-v', '--interactive', '-i', '--require-approval', '-a')]
 
     # Set debug mode
     if not verbose:
         os.environ['DEBUG_OLLAMA'] = '0'
         os.environ['SMOLAGENTS_LOG_LEVEL'] = 'WARNING'  # Suppress debug output
 
+    # Set approval mode
+    if require_approval:
+        os.environ['REQUIRE_APPROVAL'] = '1'
+
+    # Create agent AFTER setting environment variables
+    agent = DevOpsAgent(
+        tools=[read_file, write_file, bash, get_env],
+        model=model,
+        instructions="You are a DevOps automation assistant; use the tools provided and call no other code.",
+        max_steps=15  # Allow more steps for error recovery and debugging
+    )
+    model.tools = agent.tools
+
     # Interactive mode
     if interactive or len(args) == 0:
         print("🤖 DevOps Agent - Interactive Mode")
+        if require_approval:
+            print("⚠️  Approval mode enabled - you'll be asked to approve each tool call")
         print("Type your task and press Enter. Type 'exit' or 'quit' to leave.\n")
 
         while True:
@@ -212,7 +298,16 @@ if __name__ == "__main__":
                 print("\n\nInterrupted. Type 'exit' to quit.")
                 continue
             except Exception as e:
-                print(f"\n❌ Error: {e}")
+                error_msg = str(e)
+                # Filter out internal error messages meant for the agent, not the user
+                # But keep user rejection messages (those are real user feedback)
+                if "REPETITION DETECTED" in error_msg or "HALLUCINATION ALERT" in error_msg:
+                    # These are feedback for the LLM - don't show to user
+                    # Agent will have already tried to self-correct through SmolAgents' error handling
+                    continue
+                else:
+                    # Show actual errors (command failures, file not found, user rejections, etc.)
+                    print(f"\n❌ Error: {e}")
                 continue
 
         sys.exit(0)

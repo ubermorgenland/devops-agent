@@ -8,6 +8,7 @@ A lightweight AI-powered DevOps automation tool using a fine-tuned Qwen3-1.7B mo
 - **Structured Reasoning**: Uses `<think>` and `<plan>` tags to show thought process
 - **Validation-Aware**: Checks command outputs for errors before proceeding
 - **Multi-Step Tasks**: Handles complex workflows requiring multiple tool calls
+- **Approval Mode**: Optional user confirmation before executing each tool call for enhanced safety
 - **Resource Efficient**: Optimized for local development (1GB GGUF model)
 - **Fast**: Completes typical DevOps tasks in ~10 seconds
 
@@ -116,6 +117,23 @@ python agent.py --interactive
 python agent.py "Your query" --verbose
 ```
 
+**Approval mode (require confirmation before executing tools):**
+```bash
+# Interactive mode with approval
+python agent.py --require-approval
+# OR use shorthand
+python agent.py -a
+
+# Combine with interactive mode
+python agent.py -i -a
+
+# Single query with approval
+python agent.py --require-approval "List all Docker containers"
+
+# Using environment variable
+REQUIRE_APPROVAL=1 python agent.py
+```
+
 ## Interactive Mode
 
 The agent supports an interactive REPL (Read-Eval-Print Loop) for continuous task execution:
@@ -128,6 +146,7 @@ python agent.py
 - Execute multiple tasks in one session
 - Real-time thinking indicator with timer
 - Clean output showing only tool calls and observations
+- Optional approval mode for safety (confirm before executing tools)
 - Type `exit`, `quit`, or `q` to leave
 - Type `help` or `?` for available commands
 
@@ -164,6 +183,71 @@ Goodbye!
 **Verbose mode:**
 ```bash
 python agent.py --verbose  # Show detailed execution steps
+```
+
+**Approval mode (with example):**
+```
+$ python agent.py -i -a
+
+🤖 DevOps Agent - Interactive Mode
+⚠️  Approval mode enabled - you'll be asked to approve each tool call
+Type your task and press Enter. Type 'exit' or 'quit' to leave.
+
+> List all files in current directory
+
+⏱️ 3s
+
+🔧 Tool call requested:
+   Tool: bash
+   Arguments: {
+     "command": "ls -la"
+   }
+
+Approve this tool call? [y/n]: y
+
+bash {ls -la}
+Observations:
+total 64
+drwxr-xr-x  8 user  staff   256 Jan 13 10:30 .
+drwxr-xr-x 15 user  staff   480 Jan 10 15:22 ..
+-rw-r--r--  1 user  staff  5234 Jan 13 10:28 agent.py
+...
+
+✅ Successfully listed all files in the current directory
+
+> Delete all log files
+
+⏱️ 2s
+
+🔧 Tool call requested:
+   Tool: bash
+   Arguments: {
+     "command": "rm -f *.log"
+   }
+
+Approve this tool call? [y/n]: n
+Optional feedback for the agent (press Enter to skip): Too dangerous, just list them first
+
+bash {rm -f *.log}
+Observations:
+User rejected this tool call. User comment: Too dangerous, just list them first
+
+⏱️ 4s
+
+🔧 Tool call requested:
+   Tool: bash
+   Arguments: {
+     "command": "ls -la *.log"
+   }
+
+Approve this tool call? [y/n]: y
+
+bash {ls -la *.log}
+Observations:
+-rw-r--r--  1 user  staff  12345 Jan 12 14:22 app.log
+-rw-r--r--  1 user  staff   4567 Jan 13 09:15 error.log
+
+✅ Found 2 log files in the current directory
 ```
 
 ## Usage Examples
@@ -417,7 +501,14 @@ Make sure you've downloaded the GGUF file from Google Drive and placed it in the
 
 **Do NOT expose this tool to untrusted users or networks.**
 
+**Security Enhancement - Approval Mode:**
+- Use `--require-approval` or `-a` flag to enable user confirmation before tool execution
+- Each tool call will require explicit approval (y/n)
+- Rejections can include feedback comments that guide the agent to try alternative approaches
+- Recommended for sensitive operations or when testing new workflows
+
 For production use, consider:
+- Using approval mode (`--require-approval`) for all operations
 - Adding command whitelisting
 - Implementing proper input validation
 - Running in Docker containers with limited permissions
