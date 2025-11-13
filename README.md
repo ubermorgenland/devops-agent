@@ -72,23 +72,17 @@ pip install smolagents requests
 
 ### 2. Download the Model
 
-Download the fine-tuned GGUF model (1GB) from Google Drive:
-
-**Google Drive Folder**: https://drive.google.com/drive/folders/1tbLCJFDukULHMljylGKYRWLciV78L3TP?usp=drive_link
-
-1. Navigate to the folder and download `qwen-devops-442-q4_k_m.gguf`
-2. Place the file in this repository directory (same location as `Modelfile`)
-
-Alternatively, if you have `gdown` installed:
+Download the fine-tuned GGUF model (1GB) from Hugging Face:
 
 ```bash
-# Install gdown
-pip install gdown
+# Install huggingface-hub if not already installed
+pip install huggingface-hub
 
-# Download directly (you may need to adjust the file ID)
-gdown --folder https://drive.google.com/drive/folders/1tbLCJFDukULHMljylGKYRWLciV78L3TP
-mv qwen-devops-442-q4_k_m.gguf .
+# Download the model
+huggingface-cli download ubermorgen/qwen3-devops qwen3-devops.gguf --local-dir .
 ```
+
+Or download manually from: https://huggingface.co/ubermorgen/qwen3-devops
 
 **Note**: Make sure the GGUF file is in the same directory as the `Modelfile`.
 
@@ -352,22 +346,6 @@ The agent has access to these tools:
 - Validates each step before proceeding
 - Better error handling and retry logic
 
-<!-- FOR PUBLIC RELEASE: Remove training specifics below this line -->
-
-**Training Details** (internal):
-- Dataset: 442 multi-turn DevOps conversations
-  - Docker workflows: 195 examples (44%)
-  - Kubernetes operations: 108 examples (24%)
-  - General DevOps: 139 examples (32%)
-- Method: Two-stage curriculum learning
-  - Stage 1: Initial reasoning and first tool call (2 epochs)
-  - Stage 2: Sequential tool execution with context (1 epoch)
-- Retention: 94% of examples after validation
-- Training time: ~30 minutes on NVIDIA L4 GPU
-- Tool usage: bash (77%), write_file (15%), final_answer (7%), read_file (1%)
-
-<!-- END INTERNAL SECTION -->
-
 ## Architecture
 
 ```
@@ -475,9 +453,9 @@ ollama list
 ollama create qwen-devops-v2 -f Modelfile
 ```
 
-### Error: "No such file: qwen-devops-442-q4_k_m.gguf"
+### Error: "No such file: qwen3-devops.gguf"
 
-Make sure you've downloaded the GGUF file from Google Drive and placed it in the repository directory.
+Make sure you've downloaded the GGUF file from Hugging Face and placed it in the repository directory.
 
 ### Agent gets stuck or loops
 
@@ -538,10 +516,34 @@ For production use, consider:
 ollama_devops/
 ├── agent.py              # Main CLI and agent definition
 ├── ollama_backend.py     # Custom Ollama backend for SmolAgents
+├── smolagents_patches.py # Output filtering patches
 ├── Modelfile             # Ollama model configuration
+├── test_agent.py         # Unit tests
 ├── README.md             # This file
 └── tests/                # Test scripts
 ```
+
+### Testing
+
+Run the test suite to verify functionality:
+
+```bash
+# Install pytest (included in requirements.txt)
+pip install pytest
+
+# Run all tests
+pytest test_agent.py -v
+
+# Run with coverage
+pytest test_agent.py --cov=agent --cov-report=html
+```
+
+The test suite includes:
+- **Tool Tests**: Unit tests for `read_file`, `write_file`, `bash`, and `get_env`
+- **Agent Tests**: Initialization, verbose mode, and approval mode functionality
+- **Integration Tests**: End-to-end workflows combining multiple tools
+
+All 16 tests should pass on a properly configured system.
 
 ### Adding New Tools
 
@@ -586,15 +588,24 @@ SMOLAGENTS_LOG_LEVEL=DEBUG python agent.py "test query" 2>&1 | tee test_output.l
 - **Local Only**: Requires Ollama running locally
 - **Max Steps**: Limited to 15 steps by default (configurable)
 
+## Extensibility
+
+This project uses a modular backend architecture. While it currently ships with the `ollama_backend.py` for local Ollama models, the design supports:
+
+- **Alternative Model Backends**: Support for other inference engines (llama.cpp, API-based models, etc.) can be added based on user requests
+- **Larger Models**: The codebase supports any GGUF model - you can use larger models (3B, 7B, 14B) by updating the `Modelfile`
+- **Custom Tools**: Easy to add new tools using the `@tool` decorator (see CONTRIBUTING.md)
+
+If you need support for a specific model format or backend, please open an issue describing your use case.
+
 ## Future Enhancements
 
 - [x] Interactive mode (REPL with clean output)
+- [x] Docker containerization
 - [ ] Conversation history management (multi-turn context)
 - [ ] Better error handling with retry logic
 - [ ] Command whitelisting for security
-- [ ] Support for larger models (7B, 13B)
 - [ ] Web UI interface
-- [ ] Docker containerization
 - [ ] KV cache optimization for faster responses
 
 ## License
