@@ -51,7 +51,9 @@ Step 2: Provide summary
 
 ## Quick Start
 
-### One-Line Installation
+### 🎯 **Recommended: Native Installation**
+
+For the best experience with full DevOps capabilities:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ubermorgenland/devops-agent/main/install.sh | bash
@@ -64,61 +66,137 @@ This will automatically:
 - Create the Ollama model
 - Set up the `devops-agent` CLI command
 
+**Why native installation?**
+- ✅ **Full system access** - manage real infrastructure
+- ✅ **No credential mounting** - works with your existing setup
+- ✅ **Better performance** - no container overhead
+- ✅ **Simpler usage** - just run `devops-agent`
+
 ---
 
-### Docker Installation (Config Mounting Approach)
+### 🐳 **Alternative: Docker Installation**
 
-Docker installation with configuration mounting provides practical Docker and Kubernetes DevOps capabilities:
+For containerized environments or testing:
 
-**Tools Included:**
-- 🔧 **kubectl** - Kubernetes management
-- 🐳 **docker** - Container operations
-- 📁 **File operations** - Read/write files
-- 🤖 **DevOps agent** - Specialized for Docker & Kubernetes workflows
+⚠️ **Important**: Docker versions require mounting your credentials for cloud/Kubernetes access. For simplest setup, use native installation above.
+
+#### **Option 1: Lite Version (Requires Ollama Running)**
+Perfect if you already have Ollama installed and running locally.
 
 ```bash
-# Pull the current image
-docker pull ubermorgenai/ollama-devops:latest
+# Pull the lite image (faster, smaller ~500MB)
+docker pull ubermorgenai/ollama-devops:lite
 
 # Run with your configurations mounted
 docker run -it --rm \
   --add-host=host.docker.internal:host-gateway \
   -e OLLAMA_HOST=http://host.docker.internal:11434 \
   -v ~/.kube:/home/devops/.kube:ro \
+  -v ~/.config/gcloud:/home/devops/.config/gcloud \
+  -v ~/.aws:/home/devops/.aws \
+  -v ~/.azure:/home/devops/.azure \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd):/workspace \
-  ubermorgenai/ollama-devops:latest
+  ubermorgenai/ollama-devops:lite
 ```
 
-**Example Usage:**
+#### **Option 2: Full Version (All-in-One)**
+Complete package with Ollama and model included - no external dependencies.
 
 ```bash
-# Kubernetes operations
+# Pull the full image (slower, larger ~2GB, but complete)
+docker pull ubermorgenai/ollama-devops:full
+
+# Run standalone (no external Ollama needed)
 docker run -it --rm \
+  -p 11434:11434 \
+  -v ~/.kube:/home/devops/.kube:ro \
+  -v ~/.config/gcloud:/home/devops/.config/gcloud \
+  -v ~/.aws:/home/devops/.aws \
+  -v ~/.azure:/home/devops/.azure \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):/workspace \
+  ubermorgenai/ollama-devops:full
+```
+
+**Tools Included in Both:**
+- 🔧 **kubectl** - Kubernetes management
+- ☁️ **gcloud** - Google Cloud Platform authentication
+- 🔶 **aws** - Amazon Web Services authentication
+- 🌐 **az** - Microsoft Azure authentication
+- 🐳 **docker** - Container operations
+- 🤖 **DevOps agent** - AI-powered automation
+
+#### **Example Usage:**
+
+**Lite Version Examples:**
+```bash
+# File operations (requires external Ollama)
+docker run --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  -v $(pwd):/workspace \
+  ubermorgenai/ollama-devops:lite \
+  "List all files in the current directory"
+
+# Kubernetes operations
+docker run --rm \
   --add-host=host.docker.internal:host-gateway \
   -e OLLAMA_HOST=http://host.docker.internal:11434 \
   -v ~/.kube:/home/devops/.kube:ro \
-  ubermorgenai/ollama-devops:latest \
+  -v ~/.config/gcloud:/home/devops/.config/gcloud \
+  ubermorgenai/ollama-devops:lite \
   "Get all pods in default namespace"
 
 # Docker operations
-docker run -it --rm \
+docker run --rm \
   --add-host=host.docker.internal:host-gateway \
   -e OLLAMA_HOST=http://host.docker.internal:11434 \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  ubermorgenai/ollama-devops:latest \
+  ubermorgenai/ollama-devops:lite \
   "List all running Docker containers"
+```
 
-# Interactive mode with full access
-docker run -it --rm \
-  --add-host=host.docker.internal:host-gateway \
-  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+**Full Version Examples:**
+```bash
+# File operations (completely self-contained)
+docker run --rm \
+  -v $(pwd):/workspace \
+  ubermorgenai/ollama-devops:full \
+  "Create a Dockerfile for a Node.js application"
+
+# Kubernetes operations (no external Ollama needed)
+docker run --rm \
   -v ~/.kube:/home/devops/.kube:ro \
+  -v ~/.config/gcloud:/home/devops/.config/gcloud \
+  ubermorgenai/ollama-devops:full \
+  "Get all pods in default namespace"
+
+# Interactive mode with full DevOps access
+docker run -it --rm \
+  -p 11434:11434 \
+  -v ~/.kube:/home/devops/.kube:ro \
+  -v ~/.config/gcloud:/home/devops/.config/gcloud \
+  -v ~/.aws:/home/devops/.aws \
+  -v ~/.azure:/home/devops/.azure \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v $(pwd):/workspace \
-  ubermorgenai/ollama-devops:latest \
+  ubermorgenai/ollama-devops:full \
   --interactive
 ```
+
+**Credential Requirements:**
+- **Kubernetes**: Mount `~/.kube` (read-only) for cluster access
+- **Google Cloud**: Mount `~/.config/gcloud` (read-write) for GKE authentication
+- **AWS**: Mount `~/.aws` (read-write) for EKS authentication
+- **Azure**: Mount `~/.azure` (read-write) for AKS authentication
+- **Docker**: Mount `/var/run/docker.sock` for container operations
+
+**Security Notes:**
+- Only mount credentials you actually need for your use case
+- Credentials are never stored in the container image
+- Container has isolated access only to mounted directories
+- This is standard practice for containerized DevOps tools
 
 ---
 

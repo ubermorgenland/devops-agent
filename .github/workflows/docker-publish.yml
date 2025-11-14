@@ -58,15 +58,46 @@ jobs:
           type=semver,pattern={{major}}
           type=raw,value=latest,enable={{is_default_branch}}
 
-    - name: Build and push Docker image
-      id: build
+    - name: Build and push Docker image (lite)
+      id: build-lite
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:lite
+          ubermorgenai/ollama-devops:lite
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha,scope=lite
+        cache-to: type=gha,mode=max,scope=lite
+
+    - name: Build and push Docker image (full)
+      id: build-full
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile.full
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: |
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:full
+          ubermorgenai/ollama-devops:full
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha,scope=full
+        cache-to: type=gha,mode=max,scope=full
+
+    - name: Build and push Docker image (latest - points to lite)
+      id: build-latest
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
         platforms: linux/amd64,linux/arm64
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=gha,scope=lite
+        cache-to: type=gha,mode=max,scope=lite
 

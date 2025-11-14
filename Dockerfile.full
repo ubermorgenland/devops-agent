@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 LABEL maintainer="Ubermorgen"
-LABEL description="Ollama DevOps Agent - AI-powered DevOps automation"
+LABEL description="Ollama DevOps Agent - All-in-one with Ollama and model included"
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -40,6 +40,9 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 RUN curl -fsSL "https://download.docker.com/linux/static/stable/$(uname -m)/docker-20.10.17.tgz" | tar xzvf - --strip 1 -C /usr/local/bin docker/docker \
     && chmod +x /usr/local/bin/docker
 
+# Install Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
 # Set working directory
 WORKDIR /app
 
@@ -56,16 +59,25 @@ COPY smolagents_patches.py .
 COPY Modelfile .
 COPY install.sh .
 
-# Note: This Dockerfile assumes Ollama is running on the host or another container
-# Set OLLAMA_HOST environment variable to point to your Ollama instance
-ENV OLLAMA_HOST=http://host.docker.internal:11434
+# Download model from Hugging Face
+RUN pip install --no-cache-dir huggingface_hub \
+    && python3 -c "from huggingface_hub import hf_hub_download; hf_hub_download(repo_id='ubermorgen/qwen3-devops', filename='qwen3-devops.gguf', local_dir='.')"
 
 # Create a non-root user
 RUN useradd -m -u 1000 devops && chown -R devops:devops /app
 USER devops
 
-# Set entrypoint
-ENTRYPOINT ["python3", "agent.py"]
+# Start Ollama service and create model, then run agent
+COPY docker-entrypoint-full.sh /usr/local/bin/
+USER root
+RUN chmod +x /usr/local/bin/docker-entrypoint-full.sh
+USER devops
 
-# Default command (interactive mode)
-CMD ["--interactive"]
+# Default environment (can be overridden)
+ENV OLLAMA_HOST=http://localhost:11434
+
+# Expose Ollama port
+EXPOSE 11434
+
+# Set entrypoint
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint-full.sh"]
