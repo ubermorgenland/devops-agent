@@ -72,7 +72,9 @@ def get_env(key: str) -> str:
     return value
 
 # Model backend - using merged model (LoRA weights merged into base model for faster inference)
-model = OllamaChat(model="qwen3-devops")
+ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+ollama_endpoint = f"{ollama_host}/api/chat" if not ollama_host.endswith("/api/chat") else ollama_host
+model = OllamaChat(model="qwen3-devops", endpoint=ollama_endpoint)
 
 
 
