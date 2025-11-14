@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Ollama service for running the model
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./qwen3-devops.gguf:/tmp/qwen3-devops.gguf:ro
+      - ./Modelfile:/tmp/Modelfile:ro
+    environment:
+      - OLLAMA_ORIGINS=*
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # DevOps Agent service
+  devops-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-agent
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # For Docker operations
+      - ~/.kube:/home/devops/.kube:ro                  # For kubectl operations
+      - .:/workspace:rw                                # Mount workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    restart: "no"
+    profiles:
+      - interactive
+
+  # Model setup service (runs once to create the model)
+  model-setup:
+    image: ollama/ollama:latest
+    container_name: model-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - ./qwen3-devops.gguf:/tmp/qwen3-devops.gguf:ro
+      - ./Modelfile:/tmp/Modelfile:ro
+    command: >
+      sh -c "
+        echo 'Setting up qwen3-devops model...' &&
+        cp /tmp/Modelfile /tmp/setup/Modelfile &&
+        cp /tmp/qwen3-devops.gguf /tmp/setup/ &&
+        cd /tmp/setup &&
+        ollama create qwen3-devops -f Modelfile &&
+        echo 'Model setup complete!'
+      "
+    volumes:
+      - ollama_data:/root/.ollama
+      - setup_temp:/tmp/setup
+    restart: "no"
+    profiles:
+      - setup
+
+volumes:
+  ollama_data:
+    driver: local
+  setup_temp:
+    driver: local

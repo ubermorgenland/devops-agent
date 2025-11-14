@@ -66,6 +66,74 @@ This will automatically:
 
 ---
 
+### Docker Installation 
+
+**Option 1: Using Pre-built Images**
+
+```bash
+# Pull the latest image from GitHub Container Registry
+docker pull ghcr.io/ubermorgenland/ollama_devops:latest
+
+# Or from Docker Hub
+docker pull ubermorgenai/ollama-devops:latest
+
+# Run in interactive mode
+docker run -it --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ~/.kube:/home/devops/.kube:ro \
+  ghcr.io/ubermorgenland/ollama_devops:latest
+```
+
+**Option 2: Using Docker Compose (Full Setup)**
+
+```bash
+# Clone the repository
+git clone https://github.com/ubermorgenland/ollama_devops.git
+cd ollama_devops
+
+# Download the model (if not already present)
+wget https://huggingface.co/ubermorgen/qwen3-devops/resolve/main/qwen3-devops.gguf
+
+# Start Ollama service
+docker-compose up -d ollama
+
+# Setup the model (run once)
+docker-compose --profile setup run --rm model-setup
+
+# Run the agent interactively
+docker-compose --profile interactive run --rm devops-agent
+
+# Or run a single command
+docker-compose --profile interactive run --rm devops-agent "Get all pods in default namespace"
+```
+
+**Option 3: Quick Docker Run with Ollama**
+
+```bash
+# Start Ollama in background
+docker run -d --name ollama \
+  -p 11434:11434 \
+  -v ollama_data:/root/.ollama \
+  ollama/ollama:latest
+
+# Wait for Ollama to start, then run agent
+docker run -it --rm \
+  --link ollama:ollama \
+  -e OLLAMA_HOST=http://ollama:11434 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ~/.kube:/home/devops/.kube:ro \
+  ghcr.io/ubermorgenland/ollama_devops:latest
+```
+
+**Docker Features:**
+- ✅ **No local dependencies** - everything runs in containers
+- ✅ **Cross-platform** - works on Linux, macOS, Windows
+- ✅ **Isolated environment** - no conflicts with host system
+- ✅ **Easy cleanup** - just remove containers when done
+- ✅ **Volume mounts** - access to Docker and Kubernetes from container
+
+---
+
 ### Manual Installation
 
 #### 1. Prerequisites
@@ -565,6 +633,44 @@ The test suite includes:
 - **Integration Tests**: End-to-end workflows combining multiple tools
 
 All 16 tests should pass on a properly configured system.
+
+### Docker Image Publishing (For Maintainers)
+
+The repository includes automated Docker image publishing via GitHub Actions:
+
+**Setup Requirements:**
+1. **GitHub Container Registry** (automatic with GITHUB_TOKEN)
+2. **Docker Hub** (requires secrets):
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Docker Hub access token
+
+**Automatic Publishing:**
+- **On push to main**: Creates `latest` tag
+- **On version tags** (v*): Creates versioned tags (e.g., `v1.0.0`, `1.0`, `1`)
+- **Multi-architecture**: Builds for `linux/amd64` and `linux/arm64`
+- **Registries**: Publishes to both GitHub Container Registry and Docker Hub
+
+**Manual Image Build:**
+```bash
+# Build locally
+docker build -t ollama-devops .
+
+# Test the image
+docker run -it --rm ollama-devops --help
+```
+
+**Release Process:**
+```bash
+# Create and push a version tag
+git tag v1.0.0
+git push origin v1.0.0
+
+# GitHub Actions will automatically:
+# - Build multi-arch images
+# - Push to ghcr.io/ubermorgenland/ollama_devops:v1.0.0
+# - Push to ubermorgenai/ollama-devops:v1.0.0
+# - Update latest tags
+```
 
 ### Adding New Tools
 
