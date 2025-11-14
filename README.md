@@ -66,6 +66,62 @@ This will automatically:
 
 ---
 
+### Docker Installation (Config Mounting Approach)
+
+Docker installation with configuration mounting provides practical Docker and Kubernetes DevOps capabilities:
+
+**Tools Included:**
+- 🔧 **kubectl** - Kubernetes management
+- 🐳 **docker** - Container operations
+- 📁 **File operations** - Read/write files
+- 🤖 **DevOps agent** - Specialized for Docker & Kubernetes workflows
+
+```bash
+# Pull the current image
+docker pull ubermorgenai/ollama-devops:latest
+
+# Run with your configurations mounted
+docker run -it --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  -v ~/.kube:/home/devops/.kube:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):/workspace \
+  ubermorgenai/ollama-devops:latest
+```
+
+**Example Usage:**
+
+```bash
+# Kubernetes operations
+docker run -it --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  -v ~/.kube:/home/devops/.kube:ro \
+  ubermorgenai/ollama-devops:latest \
+  "Get all pods in default namespace"
+
+# Docker operations
+docker run -it --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  ubermorgenai/ollama-devops:latest \
+  "List all running Docker containers"
+
+# Interactive mode with full access
+docker run -it --rm \
+  --add-host=host.docker.internal:host-gateway \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  -v ~/.kube:/home/devops/.kube:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):/workspace \
+  ubermorgenai/ollama-devops:latest \
+  --interactive
+```
+
+---
+
 ### Manual Installation
 
 #### 1. Prerequisites
@@ -638,7 +694,7 @@ SMOLAGENTS_LOG_LEVEL=DEBUG devops-agent "test query" 2>&1 | tee test_output.log
 
 ## Limitations
 
-- **Training Focus**: Optimized for Docker (44%) and Kubernetes (24%) workflows. Limited training on:
+- **Training Focus**: Optimized for Docker and Kubernetes workflows. Limited training on:
   - Cloud CLIs (gcloud, AWS CLI, Azure CLI)
   - General system administration
   - Database operations
