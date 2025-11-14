@@ -3,10 +3,16 @@ FROM python:3.11-slim
 LABEL maintainer="Ubermorgen"
 LABEL description="Ollama DevOps Agent - AI-powered DevOps automation"
 
-# Install system dependencies
+# Install system dependencies and kubectl
 RUN apt-get update && apt-get install -y \
     curl \
     git \
+    ca-certificates \
+    apt-transport-https \
+    && curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg \
+    && echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list \
+    && apt-get update \
+    && apt-get install -y kubectl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
