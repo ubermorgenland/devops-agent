@@ -19,12 +19,9 @@ RUN curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --d
     && apt-get install -y kubectl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Docker CLI (for Docker operations)
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
-    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian bullseye stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y docker-ce-cli \
-    && rm -rf /var/lib/apt/lists/*
+# Install Docker CLI (static binary approach for multi-arch support)
+RUN curl -fsSL "https://download.docker.com/linux/static/stable/$(uname -m)/docker-20.10.17.tgz" | tar xzvf - --strip 1 -C /usr/local/bin docker/docker \
+    && chmod +x /usr/local/bin/docker
 
 # Set working directory
 WORKDIR /app
