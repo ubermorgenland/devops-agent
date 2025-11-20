@@ -53,7 +53,21 @@ def bash(command: str) -> str:
     """
 
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    return result.stdout or result.stderr
+    output = result.stdout or result.stderr
+
+    # If output is empty/blank, run echo $? to get exit status
+    if not output or not output.strip():
+        # Get exit status by running echo $? in the same context
+        status_result = subprocess.run(
+            f"bash -c '{command}; echo $?'",
+            shell=True,
+            capture_output=True,
+            text=True
+        )
+        exit_code = status_result.stdout.strip().split('\n')[-1]  # Get last line (exit code)
+        return f"Command executed. Exit code: {exit_code}"
+
+    return output
 
 @tool
 def get_env(key: str) -> str:
@@ -89,8 +103,8 @@ class DevOpsAgent(ToolCallingAgent):
         ]
         # Track last tool call to detect repetition
         self.last_tool_call = None
-        # Enable/disable tool approval prompts
-        self.require_approval = os.getenv('REQUIRE_APPROVAL') == '1'
+        # Enable/disable tool approval prompts (default: enabled, disable with REQUIRE_APPROVAL=0)
+        self.require_approval = os.getenv('REQUIRE_APPROVAL') != '0'
 
     def ask_user_approval(self, tool_name: str, arguments: dict):
         """
@@ -240,16 +254,22 @@ if __name__ == "__main__":
     # Check for verbose, interactive, and approval flags
     verbose = '--verbose' in sys.argv or '-v' in sys.argv or os.getenv('VERBOSE') == '1'
     interactive = '--interactive' in sys.argv or '-i' in sys.argv
-    require_approval = '--require-approval' in sys.argv or '-a' in sys.argv or os.getenv('REQUIRE_APPROVAL') == '1'
-    args = [arg for arg in sys.argv[1:] if arg not in ('--verbose', '-v', '--interactive', '-i', '--require-approval', '-a')]
+    no_approval = '--no-approval' in sys.argv or '-na' in sys.argv
+    # Approval is ON by default, disabled with -na or REQUIRE_APPROVAL=0
+    require_approval = not no_approval and os.getenv('REQUIRE_APPROVAL') != '0'
+    # Filter out all flag arguments (including old -a/--require-approval for backward compatibility)
+    args = [arg for arg in sys.argv[1:] if arg not in ('--verbose', '-v', '--interactive', '-i', '--no-approval', '-na', '--require-approval', '-a')]
 
     # Set debug mode
     if not verbose:
         os.environ['DEBUG_OLLAMA'] = '0'
         os.environ['SMOLAGENTS_LOG_LEVEL'] = 'WARNING'  # Suppress debug output
 
-    # Set approval mode
-    if require_approval:
+    # Set approval mode (explicitly set environment variable)
+    if no_approval:
+        os.environ['REQUIRE_APPROVAL'] = '0'
+    elif 'REQUIRE_APPROVAL' not in os.environ:
+        # Set default to enabled if not explicitly set
         os.environ['REQUIRE_APPROVAL'] = '1'
 
     # Create agent AFTER setting environment variables
@@ -271,7 +291,9 @@ if __name__ == "__main__":
 
         print("🤖 DevOps Agent - Interactive Mode")
         if require_approval:
-            print("⚠️  Approval mode enabled - you'll be asked to approve each tool call")
+            print("⚠️  Approval mode enabled - you'll be asked to approve each tool call. To disable, run with '-na' option")
+        else:
+            print("⚠️  Approval mode disabled - tools will execute automatically")
         print("Type your task and press Enter. Type 'exit' or 'quit' to leave.\n")
 
         while True:
