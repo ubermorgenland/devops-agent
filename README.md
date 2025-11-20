@@ -8,7 +8,7 @@ A lightweight AI-powered DevOps automation tool using a fine-tuned Qwen3-1.7B mo
 - **Structured Reasoning**: Uses `<think>` and `<plan>` tags to show thought process
 - **Validation-Aware**: Checks command outputs for errors before proceeding
 - **Multi-Step Tasks**: Handles complex workflows requiring multiple tool calls
-- **Approval Mode**: Optional user confirmation before executing each tool call for enhanced safety
+- **Approval Mode**: User confirmation before executing each tool call for enhanced safety (enabled by default)
 - **Resource Efficient**: Optimized for local development (1GB GGUF model)
 - **Fast**: Completes typical DevOps tasks in ~10 seconds
 
@@ -264,21 +264,25 @@ devops-agent --interactive
 devops-agent "Your query" --verbose
 ```
 
-**Approval mode (require confirmation before executing tools):**
+**Approval mode (enabled by default, disable with -na flag):**
 ```bash
-# Interactive mode with approval
-devops-agent --require-approval
+# By default, approval mode is enabled
+devops-agent "List all Docker containers"
+# You'll be prompted to approve each tool call
+
+# Disable approval mode for automatic execution
+devops-agent --no-approval "List all Docker containers"
 # OR use shorthand
-devops-agent -a
+devops-agent -na "List all Docker containers"
 
-# Combine with interactive mode
-devops-agent -i -a
+# Combine with interactive mode without approval
+devops-agent -i -na
 
-# Single query with approval
-devops-agent --require-approval "List all Docker containers"
+# Using environment variable to disable approval
+REQUIRE_APPROVAL=0 devops-agent "Your query"
 
-# Using environment variable
-REQUIRE_APPROVAL=1 devops-agent
+# Note: Old -a/--require-approval flags are still accepted for backward
+# compatibility but are now redundant (approval is enabled by default)
 ```
 
 ## Interactive Mode
@@ -295,7 +299,7 @@ devops-agent
 - Clean output showing only tool calls and observations
 - **Arrow key support**: Use Up/Down to navigate command history, Left/Right to edit current line
 - **Persistent command history**: Commands are saved to `~/.devops_agent_history`
-- Optional approval mode for safety (confirm before executing tools)
+- Approval mode enabled by default for safety (confirm before executing tools, disable with `-na`)
 - Type `exit`, `quit`, or `q` to leave
 - Type `help` or `?` for available commands
 
@@ -334,9 +338,9 @@ Goodbye!
 devops-agent --verbose  # Show detailed execution steps
 ```
 
-**Approval mode (with example):**
+**Approval mode (enabled by default, example):**
 ```
-$ devops-agent -i -a
+$ devops-agent -i
 
 🤖 DevOps Agent - Interactive Mode
 ⚠️  Approval mode enabled - you'll be asked to approve each tool call
@@ -635,13 +639,13 @@ Make sure you've downloaded the GGUF file from Hugging Face and placed it in the
 **Do NOT expose this tool to untrusted users or networks.**
 
 **Security Enhancement - Approval Mode:**
-- Use `--require-approval` or `-a` flag to enable user confirmation before tool execution
+- **Enabled by default**: User confirmation is required before each tool execution
 - Each tool call will require explicit approval (y/n)
 - Rejections can include feedback comments that guide the agent to try alternative approaches
-- Recommended for sensitive operations or when testing new workflows
+- Use `--no-approval` or `-na` flag to disable approval mode for trusted/automated workflows
 
 For production use, consider:
-- Using approval mode (`--require-approval`) for all operations
+- Keeping approval mode enabled (default behavior) for all operations
 - Adding command whitelisting
 - Implementing proper input validation
 - Running in Docker containers with limited permissions
