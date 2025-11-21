@@ -55,17 +55,9 @@ def bash(command: str) -> str:
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     output = result.stdout or result.stderr
 
-    # If output is empty/blank, run echo $? to get exit status
+    # If output is empty/blank, return exit code from the execution
     if not output or not output.strip():
-        # Get exit status by running echo $? in the same context
-        status_result = subprocess.run(
-            f"bash -c '{command}; echo $?'",
-            shell=True,
-            capture_output=True,
-            text=True
-        )
-        exit_code = status_result.stdout.strip().split('\n')[-1]  # Get last line (exit code)
-        return f"Command executed. Exit code: {exit_code}"
+        return f"Command executed. Exit code: {result.returncode}"
 
     return output
 
