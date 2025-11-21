@@ -94,21 +94,3 @@ jobs:
         cache-from: type=gha,scope=lite
         cache-to: type=gha,mode=max,scope=lite
 
-    - name: Clean up before full build
-      run: docker system prune -f
-
-    - name: Build and push Docker image (full)
-      id: build-full
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        file: ./Dockerfile.full
-        platforms: linux/amd64,linux/arm64
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: |
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:full
-          ubermorgenai/ollama-devops:full
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha,scope=full
-        cache-to: type=gha,mode=max,scope=full
-
