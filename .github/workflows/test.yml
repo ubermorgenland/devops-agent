@@ -36,9 +36,3 @@ jobs:
     - name: Run tests
       run: |
         pytest test_agent.py test_ollama_backend.py -v --tb=short --cov=agent --cov=ollama_backend --cov-report=term-missing
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: .coverage
