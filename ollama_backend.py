@@ -239,13 +239,13 @@ class OllamaChat:
         start_time = time.time()
 
         def spinner():
-            """Animated thinking indicator"""
+            """Animated thinking indicator with helper message"""
             frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
             i = 0
             while not stop_spinner.is_set():
                 elapsed = time.time() - start_time
-                # Always use carriage return for same-line updates
-                sys.stderr.write(f"\r{frames[i % len(frames)]} thinking... {int(elapsed)}s")
+                # Show helper message
+                sys.stderr.write(f"\r{frames[i % len(frames)]} thinking... (Press ESC or Ctrl+C to stop) ⏱️  {int(elapsed)}s")
                 sys.stderr.flush()
                 time.sleep(0.1)
                 i += 1
@@ -253,6 +253,7 @@ class OllamaChat:
         spinner_thread = threading.Thread(target=spinner, daemon=True)
         spinner_thread.start()
 
+        # Simple HTTP request - KeyboardInterrupt will naturally interrupt it
         resp = requests.post(self.endpoint, json=payload, timeout=300)
         elapsed = time.time() - start_time
 
@@ -260,10 +261,10 @@ class OllamaChat:
         stop_spinner.set()
         spinner_thread.join(timeout=0.5)
 
-        # Clear the thinking line and print timing to stdout (so SmolAgents captures it inline)
-        sys.stderr.write("\r" + " " * 50 + "\r")  # Clear spinner line
+        # Clear the thinking line and print timing to stdout
+        sys.stderr.write("\r" + " " * 80 + "\r")
         sys.stderr.flush()
-        print(f"⏱️  {int(elapsed)}s", flush=True)  # Print to stdout for inline display
+        print(f"⏱️  {int(elapsed)}s", flush=True)
 
         if not resp.ok:
             raise RuntimeError(f"Ollama returned {resp.status_code}: {resp.text}")

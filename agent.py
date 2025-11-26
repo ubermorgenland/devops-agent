@@ -3,6 +3,10 @@ from smolagents.models import ChatMessage, MessageRole
 from ollama_backend import OllamaChat
 import os
 import subprocess
+import time
+import sys
+import threading
+import select
 from prompt_toolkit import PromptSession
 from prompt_toolkit.history import FileHistory
 
@@ -51,7 +55,7 @@ def bash(command: str) -> str:
     Returns:
         str: The command output. Always include this output in your final answer when the user asks about command results.
     """
-
+    # Simple subprocess execution - KeyboardInterrupt will naturally interrupt it
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     output = result.stdout or result.stderr
 
@@ -76,6 +80,117 @@ def get_env(key: str) -> str:
     if value is None:
         return f"ERROR: Environment variable '{key}' is not set"
     return value
+
+# Background keyboard listener for ESC key during execution
+class KeyboardListener:
+    """Background thread to listen for ESC key and send SIGINT"""
+    def __init__(self):
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.enabled = False
+        self.saved_settings = None  # Store terminal settings
+
+    def start(self):
+        """Start the keyboard listener thread"""
+        # Don't start if already running
+        if self.thread and self.thread.is_alive():
+            self.enabled = True
+            return
+
+        self.enabled = True
+        self.stop_event.clear()
+        self.thread = threading.Thread(target=self._listen, daemon=True)
+        self.thread.start()
+
+    def stop(self):
+        """Stop the keyboard listener thread"""
+        self.enabled = False
+        self.stop_event.set()
+
+        # Restore terminal settings immediately
+        self._restore_terminal()
+
+        # Wait briefly for thread to stop (with timeout)
+        if self.thread and self.thread.is_alive():
+            self.thread.join(timeout=0.2)  # Don't wait forever
+
+    def disable_temporarily(self):
+        """Disable listener temporarily (e.g., during prompt)"""
+        self.enabled = False
+
+    def enable_after_prompt(self):
+        """Re-enable listener after prompt"""
+        self.enabled = True
+
+    def _restore_terminal(self):
+        """Restore terminal to normal mode"""
+        if not hasattr(sys.stdin, 'fileno'):
+            return
+
+        try:
+            import termios
+            fd = sys.stdin.fileno()
+            if self.saved_settings:
+                termios.tcsetattr(fd, termios.TCSADRAIN, self.saved_settings)
+        except Exception:
+            pass
+
+    def _listen(self):
+        """Listen for ESC key in background"""
+        import termios
+        import tty
+
+        # Only works on Unix systems
+        if not hasattr(sys.stdin, 'fileno'):
+            return
+
+        old_settings = None
+        try:
+            # Save terminal settings
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
+            self.saved_settings = old_settings  # Store for later restoration
+
+            while not self.stop_event.is_set():
+                if not self.enabled:
+                    time.sleep(0.1)
+                    continue
+
+                # Check if input is available (non-blocking)
+                ready = select.select([sys.stdin], [], [], 0.1)[0]
+                if sys.stdin in ready:
+                    # Set terminal to raw mode temporarily
+                    tty.setraw(fd)
+                    char = sys.stdin.read(1)
+
+                    # Restore terminal settings immediately
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
+                    # Check if ESC key (ASCII 27)
+                    if ord(char) == 27:
+                        # ESC detected, but it might be an escape sequence (arrow key, etc.)
+                        # Check if more input follows within 50ms
+                        if sys.stdin in select.select([sys.stdin], [], [], 0.05)[0]:
+                            # More input follows, this is an escape sequence (arrow key, etc.)
+                            # Read and discard the sequence
+                            tty.setraw(fd)
+                            _ = sys.stdin.read(2)  # Read rest of escape sequence like [A
+                            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                            continue  # Don't trigger interrupt
+                        else:
+                            # Standalone ESC key - send SIGINT to trigger KeyboardInterrupt
+                            import signal
+                            os.kill(os.getpid(), signal.SIGINT)
+        except Exception:
+            # Silently handle errors
+            pass
+        finally:
+            # Always restore terminal settings
+            if old_settings is not None:
+                try:
+                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+                except Exception:
+                    pass
 
 # Model backend - using merged model (LoRA weights merged into base model for faster inference)
 ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
@@ -104,28 +219,64 @@ class DevOpsAgent(ToolCallingAgent):
         Returns (approved: bool, comment: str)
         """
         import json
+        import signal
+        from prompt_toolkit import prompt as pt_prompt
+        from prompt_toolkit.key_binding import KeyBindings
 
-        # Format arguments nicely
-        args_str = json.dumps(arguments, indent=2)
+        # Stop background keyboard listener during approval to avoid stdin conflicts
+        kb_listener = getattr(self, '_kb_listener', None)
+        if kb_listener:
+            kb_listener.stop()
 
-        print(f"\n🔧 Tool call requested:")
-        print(f"   Tool: {tool_name}")
-        print(f"   Arguments: {args_str}")
-        print()
+        try:
+            # Format arguments nicely
+            args_str = json.dumps(arguments, indent=2)
 
-        # Ask for approval
-        while True:
-            response = input("Approve this tool call? [y/n]: ").strip().lower()
+            print(f"\n🔧 Tool call requested:")
+            print(f"   Tool: {tool_name}")
+            print(f"   Arguments: {args_str}")
+            print()
 
-            if response in ['y', 'yes']:
-                return True, ""
-            elif response in ['n', 'no']:
-                # Ask for optional comment
-                comment = input("Optional feedback for the agent (press Enter to skip): ").strip()
-                return False, comment
-            else:
-                print("Please answer 'y' or 'n'")
-                continue
+            # Set up ESC key binding for approval prompt
+            kb = KeyBindings()
+
+            @kb.add('escape')
+            def _(event):
+                """ESC key sends SIGINT"""
+                os.kill(os.getpid(), signal.SIGINT)
+
+            # Ask for approval with helper message
+            while True:
+                try:
+                    response = pt_prompt(
+                        "Approve this tool call? [y/n] (Press ESC or Ctrl+C to stop): ",
+                        key_bindings=kb
+                    ).strip().lower()
+
+                except (KeyboardInterrupt, EOFError):
+                    raise  # Let KeyboardInterrupt propagate
+
+                if response in ['y', 'yes']:
+                    return True, ""
+                elif response in ['n', 'no']:
+                    # Ask for optional comment
+                    try:
+                        comment = pt_prompt(
+                            "Optional feedback for the agent (press Enter to skip): ",
+                            key_bindings=kb
+                        ).strip()
+                    except (KeyboardInterrupt, EOFError):
+                        raise  # Let KeyboardInterrupt propagate
+
+                    return False, comment
+                else:
+                    print("Please answer 'y' or 'n'")
+                    continue
+
+        finally:
+            # Restart background keyboard listener after approval
+            if kb_listener:
+                kb_listener.start()
 
     def _run_model(self, messages, stop_sequences=None):
         # Always forward self.tools to the model
@@ -278,6 +429,15 @@ if __name__ == "__main__":
         # Set up prompt_toolkit for command history and arrow key support
         history_file = os.path.expanduser("~/.devops_agent_history")
 
+        # Set up background keyboard listener for ESC key
+        kb_listener = KeyboardListener()
+
+        # Store reference on agent for use in ask_user_approval
+        agent._kb_listener = kb_listener
+
+        # Don't start listener yet - will start after first prompt
+        # This prevents interference during initial message printing
+
         # Create a prompt session with history
         session = PromptSession(history=FileHistory(history_file))
 
@@ -286,15 +446,26 @@ if __name__ == "__main__":
             print("⚠️  Approval mode enabled - you'll be asked to approve each tool call. To disable, run with '-na' option")
         else:
             print("⚠️  Approval mode disabled - tools will execute automatically")
-        print("Type your task and press Enter. Type 'exit' or 'quit' to leave.\n")
+        print("Type your task and press Enter. Press ESC to stop ongoing operations.")
+        print("Type 'exit' or 'quit' to leave.\n")
 
         while True:
             try:
+                # Reset agent state for clean execution
+                agent.last_tool_call = None
+
+                # Stop keyboard listener during prompt to avoid conflicts
+                kb_listener.stop()
+
                 # Prompt for input with arrow key support and history
                 query = session.prompt("\n> ").strip()
 
+                # Restart keyboard listener after prompt
+                kb_listener.start()
+
                 # Check for exit commands
                 if query.lower() in ['exit', 'quit', 'q']:
+                    kb_listener.stop()
                     print("\nGoodbye!")
                     break
 
@@ -306,12 +477,10 @@ if __name__ == "__main__":
                 if query.lower() in ['help', '?']:
                     print("\nAvailable commands:")
                     print("  - Type any DevOps task (e.g., 'Get all pods')")
+                    print("  - Press ESC to stop ongoing operations")
                     print("  - 'exit' or 'quit' - Exit interactive mode")
                     print("  - 'help' - Show this message")
                     continue
-
-                # Reset agent state for clean execution
-                agent.last_tool_call = None
 
                 # Execute the task - real-time filtering handled by smolagents_patches
                 print()  # Blank line before output
@@ -319,7 +488,9 @@ if __name__ == "__main__":
                 print(f"\n✅ {result}")
 
             except KeyboardInterrupt:
-                print("\n\nInterrupted. Type 'exit' to quit.")
+                print("\n\n⚠️  Interrupted. Type 'exit' to quit.")
+                # Ensure terminal is restored
+                kb_listener._restore_terminal()
                 continue
             except Exception as e:
                 error_msg = str(e)
@@ -341,6 +512,16 @@ if __name__ == "__main__":
 
     print(f"📋 Task: {query}\n")
 
-    # Real-time filtering handled by smolagents_patches
-    result = agent.run(query)
-    print(f"\n✅ Result:\n{result}\n")
+    try:
+        # Real-time filtering handled by smolagents_patches
+        result = agent.run(query)
+        print(f"\n✅ Result:\n{result}\n")
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Interrupted")
+        sys.exit(1)
+    except Exception as e:
+        error_msg = str(e)
+        # Filter out internal error messages
+        if "REPETITION DETECTED" not in error_msg and "HALLUCINATION ALERT" not in error_msg:
+            print(f"\n❌ Error: {e}")
+        sys.exit(1)
