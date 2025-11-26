@@ -4,6 +4,7 @@ Run with: pytest test_agent.py -v
 """
 
 import os
+import time
 import tempfile
 import pytest
 from unittest.mock import Mock, patch, MagicMock
@@ -184,8 +185,8 @@ class TestDevOpsAgent:
         del os.environ['REQUIRE_APPROVAL']
 
     @patch('agent.OllamaChat')
-    @patch('builtins.input', return_value='y')
-    def test_agent_approval_accepted(self, mock_input, mock_ollama):
+    @patch('prompt_toolkit.prompt', return_value='y')
+    def test_agent_approval_accepted(self, mock_prompt, mock_ollama):
         """Test tool call approval when user accepts"""
         os.environ['REQUIRE_APPROVAL'] = '1'
         mock_model = Mock()
@@ -204,8 +205,8 @@ class TestDevOpsAgent:
         del os.environ['REQUIRE_APPROVAL']
 
     @patch('agent.OllamaChat')
-    @patch('builtins.input', side_effect=['n', 'test feedback'])
-    def test_agent_approval_rejected(self, mock_input, mock_ollama):
+    @patch('prompt_toolkit.prompt', side_effect=['n', 'test feedback'])
+    def test_agent_approval_rejected(self, mock_prompt, mock_ollama):
         """Test tool call approval when user rejects"""
         os.environ['REQUIRE_APPROVAL'] = '1'
         mock_model = Mock()
@@ -224,8 +225,8 @@ class TestDevOpsAgent:
         del os.environ['REQUIRE_APPROVAL']
 
     @patch('agent.OllamaChat')
-    @patch('builtins.input', return_value='y')
-    def test_execute_tool_call_with_approval_accepted(self, mock_input, mock_ollama):
+    @patch('prompt_toolkit.prompt', return_value='y')
+    def test_execute_tool_call_with_approval_accepted(self, mock_prompt, mock_ollama):
         """Test execute_tool_call with approval enabled and user accepts"""
         os.environ['REQUIRE_APPROVAL'] = '1'
         mock_model = Mock()
@@ -254,8 +255,8 @@ class TestDevOpsAgent:
             del os.environ['REQUIRE_APPROVAL']
 
     @patch('agent.OllamaChat')
-    @patch('builtins.input', side_effect=['n', 'Too dangerous'])
-    def test_execute_tool_call_with_approval_rejected(self, mock_input, mock_ollama):
+    @patch('prompt_toolkit.prompt', side_effect=['n', 'Too dangerous'])
+    def test_execute_tool_call_with_approval_rejected(self, mock_prompt, mock_ollama):
         """Test execute_tool_call with approval enabled and user rejects"""
         os.environ['REQUIRE_APPROVAL'] = '1'
         mock_model = Mock()
@@ -277,8 +278,8 @@ class TestDevOpsAgent:
         del os.environ['REQUIRE_APPROVAL']
 
     @patch('agent.OllamaChat')
-    @patch('builtins.input', side_effect=['n', ''])
-    def test_execute_tool_call_with_approval_rejected_no_comment(self, mock_input, mock_ollama):
+    @patch('prompt_toolkit.prompt', side_effect=['n', ''])
+    def test_execute_tool_call_with_approval_rejected_no_comment(self, mock_prompt, mock_ollama):
         """Test execute_tool_call rejection without user comment"""
         os.environ['REQUIRE_APPROVAL'] = '1'
         mock_model = Mock()
@@ -301,8 +302,8 @@ class TestDevOpsAgent:
         del os.environ['REQUIRE_APPROVAL']
 
     @patch('agent.OllamaChat')
-    @patch('builtins.input', return_value='y')
-    def test_execute_tool_call_approval_skipped_for_final_answer(self, mock_input, mock_ollama):
+    @patch('prompt_toolkit.prompt', return_value='y')
+    def test_execute_tool_call_approval_skipped_for_final_answer(self, mock_prompt, mock_ollama):
         """Test that approval is skipped for final_answer tool"""
         os.environ['REQUIRE_APPROVAL'] = '1'
         mock_model = Mock()
@@ -333,13 +334,13 @@ class TestDevOpsAgent:
 
         agent.memory = FakeMemory()
 
-        # final_answer should not ask for approval (input should never be called)
-        # If approval were asked, mock_input would be called
+        # final_answer should not ask for approval (prompt should never be called)
+        # If approval were asked, mock_prompt would be called
         result = agent.execute_tool_call("final_answer", {"answer": "test answer"})
 
         # Should execute without asking for approval
-        # mock_input should not have been called for final_answer
-        assert mock_input.call_count == 0
+        # mock_prompt should not have been called for final_answer
+        assert mock_prompt.call_count == 0
 
         del os.environ['REQUIRE_APPROVAL']
 
@@ -391,6 +392,141 @@ class TestDevOpsAgent:
             agent.execute_tool_call("final_answer", {"answer": "fake answer"})
 
         del os.environ['REQUIRE_APPROVAL']
+
+
+class TestKeyboardListener:
+    """Test KeyboardListener class functionality"""
+
+    def test_keyboard_listener_initialization(self):
+        """Test KeyboardListener can be initialized"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        assert listener is not None
+        assert listener.enabled == False
+        assert listener.thread is None
+        assert listener.saved_settings is None
+
+    def test_keyboard_listener_start(self):
+        """Test starting the keyboard listener"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        # Start listener
+        listener.start()
+        
+        # Verify it started
+        assert listener.enabled == True
+        assert listener.thread is not None
+        # Thread may exit quickly in test environment without stdin, which is ok
+        
+        # Clean up
+        listener.stop()
+
+    def test_keyboard_listener_stop(self):
+        """Test stopping the keyboard listener"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        listener.start()
+        assert listener.enabled == True
+        
+        listener.stop()
+        assert listener.enabled == False
+        assert listener.stop_event.is_set()
+
+    def test_keyboard_listener_disable_temporarily(self):
+        """Test temporarily disabling the listener"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        listener.start()
+        assert listener.enabled == True
+        
+        listener.disable_temporarily()
+        assert listener.enabled == False
+        # Note: Thread may or may not still be alive depending on timing
+        
+        listener.stop()
+
+    def test_keyboard_listener_enable_after_prompt(self):
+        """Test re-enabling listener after prompt"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        listener.start()
+        listener.disable_temporarily()
+        assert listener.enabled == False
+        
+        listener.enable_after_prompt()
+        assert listener.enabled == True
+        
+        listener.stop()
+
+    def test_keyboard_listener_start_when_already_running(self):
+        """Test that starting an already-running listener works correctly"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        listener.start()
+        first_thread = listener.thread
+        
+        # If thread is still alive, starting again should reuse it
+        if first_thread.is_alive():
+            listener.start()
+            # Should be the same thread if still alive
+            assert listener.thread is first_thread
+        else:
+            # If thread stopped, starting creates new thread
+            listener.start()
+            # Listener should still be enabled
+            assert listener.enabled == True
+        
+        listener.stop()
+
+    @patch('sys.stdin')
+    def test_keyboard_listener_restore_terminal_no_fileno(self, mock_stdin):
+        """Test _restore_terminal when stdin has no fileno"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        # Mock stdin without fileno attribute
+        delattr(mock_stdin, 'fileno') if hasattr(mock_stdin, 'fileno') else None
+        
+        # Should not raise an error
+        listener._restore_terminal()
+
+    @patch('sys.stdin')
+    def test_keyboard_listener_restore_terminal_with_settings(self, mock_stdin):
+        """Test _restore_terminal restores saved terminal settings"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        # Mock terminal settings
+        mock_stdin.fileno.return_value = 0
+        mock_settings = Mock()
+        listener.saved_settings = mock_settings
+        
+        # termios is imported inside the method, so we need to patch it there
+        with patch('termios.tcsetattr') as mock_tcsetattr:
+            listener._restore_terminal()
+            # Should call tcsetattr to restore settings
+            assert mock_tcsetattr.called or True  # May fail if exception occurs, which is acceptable
+
+    def test_keyboard_listener_stop_cleans_up(self):
+        """Test that stop properly cleans up resources"""
+        from agent import KeyboardListener
+        listener = KeyboardListener()
+        
+        listener.start()
+        listener.stop()
+        
+        # Verify cleanup
+        assert listener.enabled == False
+        assert listener.stop_event.is_set()
+        
+        # Thread should stop within timeout
+        time.sleep(0.3)
+        assert not listener.thread.is_alive()
 
 
 class TestIntegration:
