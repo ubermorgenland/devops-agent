@@ -15,6 +15,7 @@ import smolagents_patches
 
 # Configuration: Large file handling thresholds
 MAX_FILE_LINES = int(os.getenv("MAX_FILE_LINES", "100"))  # Maximum lines before triggering fallback
+MAX_FILE_SIZE_BYTES = int(os.getenv("MAX_FILE_SIZE_BYTES", "51200"))  # 50KB max (50 * 1024)
 PREVIEW_LINES_HEAD = 50  # Number of lines to show from start of large file
 PREVIEW_LINES_TAIL = 50  # Number of lines to show from end of large file
 MAX_LINE_LENGTH = 500  # Truncate lines longer than this
@@ -101,15 +102,37 @@ def read_partial_file(path: str, total_lines: int) -> str:
     except Exception as e:
         return f"Error reading file: {str(e)}"
 
-def read_partial_json(path: str, total_lines: int) -> str:
+def read_partial_json(path: str, total_lines: int, file_size: int = 0) -> str:
     """Read and summarize a large JSON file."""
     import json
 
+    # Format file size
+    if file_size > 1024 * 1024:
+        size_str = f"{file_size / (1024 * 1024):.1f}MB"
+    elif file_size > 1024:
+        size_str = f"{file_size / 1024:.1f}KB"
+    else:
+        size_str = f"{file_size}B"
+
     try:
+        # For very large files, don't try to parse JSON (memory issues)
+        if file_size > 1024 * 1024:  # >1MB
+            return (f"[Large JSON file detected: {size_str}, {total_lines} lines]\n\n"
+                    f"⚠️  File too large to parse safely.\n\n"
+                    f"{'='*70}\n"
+                    f"GUIDANCE: Use these commands to work with this JSON:\n"
+                    f"  - bash jq '.' {path} | head -n 100 -- View formatted JSON\n"
+                    f"  - bash jq '.key' {path} -- Extract specific key\n"
+                    f"  - bash jq '.[0:5]' {path} -- Get first 5 array items\n"
+                    f"  - bash jq 'keys' {path} -- List all keys\n"
+                    f"  - bash grep '\"keyword\"' {path} -- Search for content\n"
+                    f"  - bash head -c 1000 {path} -- View first 1000 bytes\n"
+                    f"{'='*70}\n")
+
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        result = f"[Large JSON file detected: {total_lines} lines total]\n\n"
+        result = f"[Large JSON file detected: {size_str}, {total_lines} lines]\n\n"
 
         # Analyze structure
         if isinstance(data, dict):
@@ -179,11 +202,17 @@ def read_file(path: str) -> str:
                 f"  - bash hexdump -C {path} | head -n 20 -- View hex dump\n"
                 f"  - bash strings {path} | head -n 50 -- Extract readable strings")
 
+    # Check file size in bytes
+    file_size = os.path.getsize(path)
+
     # Count lines in file
     line_count = count_file_lines(path)
 
+    # Determine if file is too large (check both line count AND byte size)
+    is_too_large = (line_count > MAX_FILE_LINES) or (file_size > MAX_FILE_SIZE_BYTES)
+
     # For small files, read normally
-    if line_count <= MAX_FILE_LINES:
+    if not is_too_large:
         try:
             with open(path, "r", encoding='utf-8', errors='ignore') as f:
                 return f.read()
@@ -192,7 +221,7 @@ def read_file(path: str) -> str:
 
     # For large files, use fallback strategy
     if is_json_file(path):
-        return read_partial_json(path, line_count)
+        return read_partial_json(path, line_count, file_size)
     else:
         return read_partial_file(path, line_count)
 
