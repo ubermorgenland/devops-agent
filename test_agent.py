@@ -27,9 +27,10 @@ class TestTools:
             os.unlink(temp_path)
 
     def test_read_file_not_found(self):
-        """Test reading non-existent file raises exception"""
-        with pytest.raises(FileNotFoundError):
-            read_file("/nonexistent/file.txt")
+        """Test reading non-existent file returns error message"""
+        result = read_file("/nonexistent/file.txt")
+        assert "Error" in result or "not found" in result.lower()
+        assert "/nonexistent/file.txt" in result
 
     def test_write_file_success(self):
         """Test writing to a file"""
