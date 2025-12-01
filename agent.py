@@ -13,20 +13,188 @@ from prompt_toolkit.history import FileHistory
 # Apply SmolAgents monkey patches for clean real-time output
 import smolagents_patches
 
+# Configuration: Large file handling thresholds
+MAX_FILE_LINES = int(os.getenv("MAX_FILE_LINES", "100"))  # Maximum lines before triggering fallback
+PREVIEW_LINES_HEAD = 50  # Number of lines to show from start of large file
+PREVIEW_LINES_TAIL = 50  # Number of lines to show from end of large file
+MAX_LINE_LENGTH = 500  # Truncate lines longer than this
+
+# Helper functions for large file handling
+def is_binary_file(path: str) -> bool:
+    """Detect if a file is binary by checking for null bytes."""
+    try:
+        with open(path, 'rb') as f:
+            chunk = f.read(8192)  # Read first 8KB
+            # Check for null bytes (common in binary files)
+            if b'\x00' in chunk:
+                return True
+            # Check for high proportion of non-text bytes
+            text_chars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+            non_text = sum(1 for byte in chunk if byte not in text_chars)
+            return non_text / len(chunk) > 0.3 if chunk else False
+    except Exception:
+        return False
+
+def truncate_line(line: str, max_length: int = MAX_LINE_LENGTH) -> str:
+    """Truncate a line if it's too long."""
+    if len(line) <= max_length:
+        return line.rstrip()
+    return line[:max_length].rstrip() + f"... [truncated, {len(line)} chars total]"
+def count_file_lines(path: str) -> int:
+    """Count the number of lines in a file efficiently."""
+    try:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+            return sum(1 for _ in f)
+    except Exception:
+        return 0
+
+def is_json_file(path: str) -> bool:
+    """Detect if a file is JSON based on extension or content."""
+    if path.lower().endswith('.json'):
+        return True
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            first_char = f.read(1).strip()
+            return first_char in ['{', '[']
+    except Exception:
+        return False
+
+def read_partial_file(path: str, total_lines: int) -> str:
+    """Read first and last portions of a large file."""
+    try:
+        with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+
+        # Get first N and last N lines
+        head_lines = lines[:PREVIEW_LINES_HEAD]
+        tail_lines = lines[-PREVIEW_LINES_TAIL:] if len(lines) > PREVIEW_LINES_HEAD else []
+
+        # Calculate omitted lines
+        omitted_count = total_lines - len(head_lines) - len(tail_lines)
+
+        # Build response with line numbers
+        result = f"[Large file detected: {total_lines} lines total, showing first {len(head_lines)} and last {len(tail_lines)} lines]\n\n"
+        result += "--- First {} lines ---\n".format(len(head_lines))
+
+        for i, line in enumerate(head_lines, 1):
+            result += f"{i:4d} | {truncate_line(line)}\n"
+
+        if omitted_count > 0:
+            result += f"\n[... {omitted_count} lines omitted ...]\n\n"
+            result += "--- Last {} lines ---\n".format(len(tail_lines))
+            start_line_num = total_lines - len(tail_lines) + 1
+            for i, line in enumerate(tail_lines, start_line_num):
+                result += f"{i:4d} | {truncate_line(line)}\n"
+
+        # Add guidance
+        result += f"\n{'='*70}\n"
+        result += "⚠️  GUIDANCE: This file is too large to read entirely.\n"
+        result += "Use these bash commands to work with it:\n"
+        result += f"  - bash grep 'pattern' {path} -- Search for specific content\n"
+        result += f"  - bash head -n 100 {path} -- Read first 100 lines\n"
+        result += f"  - bash tail -n 100 {path} -- Read last 100 lines\n"
+        result += f"  - bash sed -n '100,200p' {path} -- Read lines 100-200\n"
+        result += f"  - bash wc -l {path} -- Count total lines\n"
+        result += f"{'='*70}\n"
+
+        return result
+    except Exception as e:
+        return f"Error reading file: {str(e)}"
+
+def read_partial_json(path: str, total_lines: int) -> str:
+    """Read and summarize a large JSON file."""
+    import json
+
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+
+        result = f"[Large JSON file detected: {total_lines} lines total]\n\n"
+
+        # Analyze structure
+        if isinstance(data, dict):
+            result += f"JSON Object with {len(data)} top-level keys:\n"
+            for key in list(data.keys())[:20]:  # Show first 20 keys
+                value = data[key]
+                value_type = type(value).__name__
+                if isinstance(value, (list, dict)):
+                    size = len(value)
+                    result += f"  - {key}: {value_type} (size: {size})\n"
+                else:
+                    result += f"  - {key}: {value_type}\n"
+
+            if len(data) > 20:
+                result += f"  ... and {len(data) - 20} more keys\n"
+
+        elif isinstance(data, list):
+            result += f"JSON Array with {len(data)} items\n"
+            result += f"First item structure: {type(data[0]).__name__ if data else 'empty'}\n"
+
+            if data and isinstance(data[0], dict):
+                result += f"Keys in first item: {list(data[0].keys())[:10]}\n"
+
+            # Show first 3 items as sample
+            result += "\nFirst 3 items:\n"
+            result += json.dumps(data[:3], indent=2)[:500] + "...\n"
+
+        # Add guidance
+        result += f"\n{'='*70}\n"
+        result += "⚠️  GUIDANCE: Use these commands to work with this JSON:\n"
+        result += f"  - bash jq '.' {path} | head -n 100 -- View formatted JSON\n"
+        result += f"  - bash jq '.key' {path} -- Extract specific key\n"
+        result += f"  - bash jq '.[0:5]' {path} -- Get first 5 array items\n"
+        result += f"  - bash grep '\"keyword\"' {path} -- Search for content\n"
+        result += f"{'='*70}\n"
+
+        return result
+    except json.JSONDecodeError as e:
+        return f"Error: Invalid JSON file: {str(e)}\nUse bash commands to inspect the file."
+    except Exception as e:
+        return f"Error reading JSON file: {str(e)}"
+
 # Define tools using decorator
 @tool
 def read_file(path: str) -> str:
     """
     Read the content of a file at the given path.
+    For large files (>100 lines), returns a partial view with guidance on using bash commands.
 
     Args:
         path (str): The path to the file to read.
 
     Returns:
-        str: The file content.
+        str: The file content, or partial content with guidance for large files.
     """
-    with open(path, "r") as f:
-        return f.read()
+    # Check if file exists
+    if not os.path.exists(path):
+        return f"Error: File not found: {path}"
+
+    # Check if file is binary
+    if is_binary_file(path):
+        file_size = os.path.getsize(path)
+        return (f"⚠️  Cannot read binary file: {path}\n"
+                f"File size: {file_size} bytes\n\n"
+                f"Use bash commands to inspect:\n"
+                f"  - bash file {path} -- Identify file type\n"
+                f"  - bash hexdump -C {path} | head -n 20 -- View hex dump\n"
+                f"  - bash strings {path} | head -n 50 -- Extract readable strings")
+
+    # Count lines in file
+    line_count = count_file_lines(path)
+
+    # For small files, read normally
+    if line_count <= MAX_FILE_LINES:
+        try:
+            with open(path, "r", encoding='utf-8', errors='ignore') as f:
+                return f.read()
+        except Exception as e:
+            return f"Error reading file: {str(e)}"
+
+    # For large files, use fallback strategy
+    if is_json_file(path):
+        return read_partial_json(path, line_count)
+    else:
+        return read_partial_file(path, line_count)
 
 @tool
 def write_file(path: str, content: str) -> str:

@@ -27,6 +27,23 @@ CRITICAL RULES:
    - If step failed, try alternative approach or debug with verification commands
    - Example: After "brew install X", verify with "which X" or "brew list | grep X"
 
+WORKING WITH LARGE FILES:
+8. When read_file returns "Large file detected" or "Large JSON file detected":
+   - The file is too large (>100 lines) to read entirely
+   - You will receive first and last portions with GUIDANCE section
+   - NEVER call read_file again on the same large file (wastes tokens)
+   - ALWAYS use the suggested bash commands from the GUIDANCE section:
+     * bash grep 'pattern' <file> -- Search for specific content
+     * bash head -n 100 <file> -- Read first 100 lines
+     * bash tail -n 100 <file> -- Read last 100 lines
+     * bash sed -n '100,200p' <file> -- Read specific line range
+     * For JSON: bash jq '.key' <file> -- Extract specific JSON keys
+   - Example workflow:
+     1. read_file returns large file warning → Read the GUIDANCE
+     2. Use bash grep/head/tail to find what you need
+     3. Continue with task using extracted info
+9. For binary files: read_file will reject them with guidance to use bash hexdump/strings/file
+
 TOOL CALL FORMAT (must use XML tags):
 <tool_call>
 {"name": "tool_name", "arguments": {"arg1": "value1", "arg2": "value2"}}
