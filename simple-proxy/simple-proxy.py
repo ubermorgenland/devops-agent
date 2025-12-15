@@ -22,10 +22,12 @@ from datetime import datetime
 import tempfile
 import re
 
-# Add parent directory to sys.path to import ollama_backend
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from ollama_backend import OllamaChat
+# Use OpenAI client for OpenRouter API
+try:
+    from openai import OpenAI
+except ImportError:
+    print("Error: openai package not found. Install with: pip install openai")
+    sys.exit(1)
 
 PORT = 3456
 ANTHROPIC_API = 'api.anthropic.com'
@@ -369,10 +371,20 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 # Client disconnected or headers already sent - just log it
                 log(f"Could not send error response to client: {str(send_error)}")
 
-# Model backend - using merged model (LoRA weights merged into base model for faster inference)
-ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-ollama_endpoint = f"{ollama_host}/api/chat" if not ollama_host.endswith("/api/chat") else ollama_host
-model = OllamaChat(model="qwen3:8b", endpoint=ollama_endpoint)
+# Model backend - OpenRouter API
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    print("Error: OPENROUTER_API_KEY environment variable not set")
+    print("Set it with: export OPENROUTER_API_KEY='your-api-key'")
+    sys.exit(1)
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY
+)
+
+# Use a fast, cheap model for log filtering
+MODEL = "openai/gpt-oss-120b"  # Free tier model
 
 
 def intercept_read_tool_calls(response_data: dict) -> bool:
@@ -480,8 +492,11 @@ File content (first 2000 chars):
 Respond with JSON:
 {{"is_log_file": true/false, "reason": "brief explanation"}}"""
 
-        response = model.generate([{"role": "user", "content": check_prompt}])
-        response_text = response.content if hasattr(response, 'content') else str(response)
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": check_prompt}]
+        )
+        response_text = response.choices[0].message.content
 
         # Parse JSON response
         json_match = re.search(r'{.*}', response_text, re.DOTALL)
@@ -513,8 +528,11 @@ Log file content:
 Provide a structured summary."""
 
         log(f"Asking AI to summarize log file ({original_size} bytes)...")
-        summary_response = model.generate([{"role": "user", "content": summarize_prompt}])
-        summary = summary_response.content if hasattr(summary_response, 'content') else str(summary_response)
+        summary_response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": summarize_prompt}]
+        )
+        summary = summary_response.choices[0].message.content
 
         filtered_size = len(summary)
         log(f"✅ AI summarized log: {original_size} bytes -> {filtered_size} bytes")
